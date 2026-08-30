@@ -61,74 +61,76 @@ const DEVICES = [
   { brand: 'Nothing', family: 'Phone', handle: 'nothing-phone-3', name: 'Nothing Phone (3)' },
 ];
 
+/* Example catalogue reflecting the product mix visible in the shop: covers, screen protection,
+   earbuds, headphones, speakers, smartwatches, cables, chargers, power banks and car mounts.
+   These are FIXTURES for layout evaluation - not the merchant's inventory, and the prices are
+   placeholders. Real products come from Shopify (see docs/product-import-guide.md). */
+const V = 'Covers by Mobile';
+const P = (title, price, level, devices, category, extra = {}) => ({
+  title, vendor: V, price, level, devices, category, ...extra,
+});
+
 const PRODUCTS = [
-  {
-    title: 'Cover trasparente antiurto con bordi rinforzati',
-    vendor: 'Covers by Mobile',
-    price: '24,90 €',
-    compare: '34,90 €',
-    level: 'exact_fit',
-    devices: 'iphone-16-pro,iphone-16-pro-max',
-    badge: 'sale',
-    category: 'case',
-  },
-  {
-    title: 'Caricatore da parete GaN 65W a tre porte USB-C',
-    vendor: 'Covers by Mobile',
-    price: '49,90 €',
-    level: 'universal',
-    devices: '',
-    badge: 'new',
-    category: 'charger',
-  },
-  {
-    title: 'Vetro temperato con kit di applicazione guidata',
-    vendor: 'Covers by Mobile',
-    price: '14,90 €',
-    level: 'exact_fit',
-    devices: 'galaxy-s25-ultra,galaxy-s25',
-    category: 'screen_protector',
-  },
-  {
-    title: 'Power bank magnetico 10.000 mAh certificato Qi2',
-    vendor: 'Covers by Mobile',
-    price: '59,90 €',
-    level: 'compatible',
-    devices: 'iphone-16-pro,iphone-16-pro-max,iphone-16',
-    category: 'powerbank',
-  },
-  {
-    title: 'Cavo USB-C / USB-C intrecciato 2 m, 240W',
-    vendor: 'Covers by Mobile',
-    price: '19,90 €',
-    level: 'universal',
-    devices: '',
-    category: 'cable',
-  },
-  {
-    title: 'Supporto auto magnetico per bocchette',
-    vendor: 'Covers by Mobile',
-    price: '29,90 €',
-    level: 'universal',
-    devices: '',
-    category: 'car_mount',
-  },
-  {
-    title: 'Cover in silicone con MagSafe per Galaxy S25 Ultra',
-    vendor: 'Covers by Mobile',
-    price: '27,90 €',
-    level: 'exact_fit',
-    devices: 'galaxy-s25-ultra',
-    category: 'case',
-  },
-  {
-    title: 'Adattatore da USB-C a jack 3,5 mm',
-    vendor: 'Covers by Mobile',
-    price: '12,90 €',
-    level: 'adapter_required',
-    devices: 'iphone-16,iphone-16-pro',
-    category: 'cable',
-  },
+  // ── Cover, per exact model ────────────────────────────────────────────────
+  P('Cover trasparente antiurto con bordi rinforzati', '24,90 €', 'exact_fit',
+    'iphone-16-pro,iphone-16-pro-max', 'case', { compare: '34,90 €', badge: 'sale' }),
+  P('Cover in silicone con MagSafe', '27,90 €', 'exact_fit', 'iphone-16-pro', 'case'),
+  P('Cover rinforzata militare grado MIL-STD', '32,90 €', 'exact_fit',
+    'iphone-16-pro-max', 'case', { badge: 'new' }),
+  P('Cover in pelle sintetica con porta carte', '29,90 €', 'exact_fit', 'iphone-16', 'case'),
+  P('Cover in silicone con MagSafe per Galaxy S25 Ultra', '27,90 €', 'exact_fit',
+    'galaxy-s25-ultra', 'case'),
+  P('Cover trasparente antigraffio per Galaxy S25', '19,90 €', 'exact_fit',
+    'galaxy-s25', 'case'),
+  P('Cover a libro con chiusura magnetica', '26,90 €', 'exact_fit',
+    'galaxy-s25-ultra,galaxy-s25', 'case'),
+  P('Cover ultrasottile opaca per Pixel 9 Pro XL', '22,90 €', 'exact_fit',
+    'pixel-9-pro-xl', 'case'),
+  P('Cover trasparente per Nothing Phone (3)', '21,90 €', 'exact_fit',
+    'nothing-phone-3', 'case'),
+
+  // ── Protezione schermo ────────────────────────────────────────────────────
+  P('Vetro temperato con kit di applicazione guidata', '14,90 €', 'exact_fit',
+    'iphone-16-pro,iphone-16-pro-max,iphone-16', 'screen_protector'),
+  P('Vetro temperato con kit di applicazione guidata', '14,90 €', 'exact_fit',
+    'galaxy-s25-ultra,galaxy-s25', 'screen_protector'),
+  P('Pellicola privacy antispia', '19,90 €', 'exact_fit',
+    'iphone-16-pro,iphone-16-pro-max', 'screen_protector', { badge: 'new' }),
+  P('Pellicola tagliata su misura in negozio', '12,90 €', 'universal', '',
+    'screen_protector'),
+  P('Vetro protettivo per fotocamera posteriore', '9,90 €', 'exact_fit',
+    'iphone-16-pro,iphone-16-pro-max', 'screen_protector'),
+
+  // ── Audio ─────────────────────────────────────────────────────────────────
+  P('Auricolari true wireless con cancellazione del rumore', '69,90 €', 'universal', '', 'audio',
+    { compare: '89,90 €', badge: 'sale' }),
+  P('Auricolari sportivi con archetto', '39,90 €', 'universal', '', 'audio'),
+  P('Cuffie over-ear Bluetooth con ANC', '119,90 €', 'universal', '', 'audio'),
+  P('Speaker Bluetooth portatile impermeabile', '59,90 €', 'universal', '', 'audio'),
+
+  // ── Ricarica ──────────────────────────────────────────────────────────────
+  P('Caricatore da parete GaN 65W a tre porte USB-C', '49,90 €', 'universal', '', 'charger',
+    { badge: 'new' }),
+  P('Caricatore da parete 20W USB-C compatto', '19,90 €', 'universal', '', 'charger'),
+  P('Caricatore da auto 45W doppia porta', '24,90 €', 'universal', '', 'charger'),
+  P('Caricatore wireless magnetico da scrivania', '39,90 €', 'compatible',
+    'iphone-16,iphone-16-pro,iphone-16-pro-max', 'charger'),
+  P('Power bank magnetico 10.000 mAh certificato Qi2', '59,90 €', 'compatible',
+    'iphone-16-pro,iphone-16-pro-max,iphone-16', 'powerbank'),
+  P('Power bank 20.000 mAh 65W con display', '54,90 €', 'universal', '', 'powerbank'),
+
+  // ── Cavi e adattatori ─────────────────────────────────────────────────────
+  P('Cavo USB-C / USB-C intrecciato 2 m, 240W', '19,90 €', 'universal', '', 'cable'),
+  P('Cavo USB-C / Lightning certificato MFi 1 m', '17,90 €', 'compatible',
+    'iphone-16', 'cable'),
+  P('Adattatore da USB-C a jack 3,5 mm', '12,90 €', 'adapter_required',
+    'iphone-16,iphone-16-pro', 'cable'),
+
+  // ── Supporti e smartwatch ─────────────────────────────────────────────────
+  P('Supporto auto magnetico per bocchette', '29,90 €', 'universal', '', 'car_mount'),
+  P('Supporto auto con ricarica wireless 15W', '44,90 €', 'universal', '', 'car_mount'),
+  P('Cinturino in silicone per smartwatch 22 mm', '14,90 €', 'universal', '', 'smartwatch'),
+  P('Cover protettiva per smartwatch con vetro', '16,90 €', 'universal', '', 'smartwatch'),
 ];
 
 const CATEGORIES = [
