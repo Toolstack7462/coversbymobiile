@@ -84,6 +84,36 @@ price, and the theme deliberately refuses to compute a percentage from it alone.
 
 ---
 
+## 3b. Repair terms — flag raised, NOT published
+
+The merchant's business card carries this disclaimer:
+
+> "Non siamo responsabili di eventuali danni durante la riparazione. Qualsiasi cellulare usato
+> può danneggiare altre parti durante la riparazione, non verrà fornita alcuna garanzia sui
+> danni durante la riparazione."
+
+**This has deliberately NOT been added to the website.** Raise it with the lawyer before any
+repair terms are published, because as drafted it is likely unenforceable against a consumer:
+
+- **Codice del Consumo (D.Lgs. 206/2005), art. 33** — terms that exclude or limit the trader's
+  liability toward a consumer are presumed *vessatorie* (unfair) and are void.
+- **Codice Civile, art. 1229** — any clause excluding liability for wilful misconduct
+  (*dolo*) or gross negligence (*colpa grave*) is void outright, consumer or not.
+
+A blanket "we are not responsible for any damage during repair" is close to both.
+
+That does not mean the shop must accept unlimited risk. A lawyer can usually draft something
+that holds up, for example: disclosing specific known risks *before* the customer authorises the
+work, obtaining written acknowledgement of the device's pre-existing condition, distinguishing
+pre-existing faults from repair-induced damage, and setting out what is and is not covered — none
+of which is a blanket exclusion.
+
+- [ ] Repair terms drafted by a lawyer
+- [ ] Pre-authorisation disclosure and customer sign-off process agreed
+- [ ] The card and in-store signage updated to match the reviewed wording
+
+---
+
 ## 4. Product safety — GPSR, Regulation (EU) 2023/988
 
 In force since 13 December 2024 for products offered to EU consumers.

@@ -133,6 +133,13 @@ const PRODUCTS = [
   P('Cover protettiva per smartwatch con vetro', '16,90 €', 'universal', '', 'smartwatch'),
 ];
 
+const CATEGORY_ART = {
+  'Cover': 'case', 'Vetri e protezione': 'screen_protector', 'Caricatori': 'charger',
+  'Cavi': 'cable', 'Power Bank': 'powerbank', 'MagSafe e magnetici': 'charger',
+  'Auricolari': 'audio', 'Supporti Auto': 'car_mount', 'Smartwatch': 'smartwatch',
+  'Offerte': 'case',
+};
+
 const CATEGORIES = [
   'Cover',
   'Vetri e protezione',
@@ -163,10 +170,42 @@ const iconTemplates = RUNTIME_ICONS.map(
   (n) => `<template id="ita-icon-${n}">${icon(n)}</template>`
 ).join('\n');
 
-/** Placeholder media. The theme ships no photography; merchant images go here. */
-const media = (label, ratio = '1') => `
+
+/* Placeholder product artwork. ORIGINAL line illustrations in the theme's icon language — not
+   photographs. The theme ships no photography by design; these exist so the grid can be judged
+   at realistic density and are replaced by the merchant's own product shots. */
+const ART = {
+  case: `<rect x="17" y="8" width="30" height="48" rx="6"/><rect x="21" y="12" width="22" height="40" rx="3"/>
+         <circle cx="27" cy="19" r="3"/><circle cx="35" cy="19" r="3"/><circle cx="27" cy="27" r="3"/>
+         <path d="M17 24h-2M17 30h-2M49 26h2"/>`,
+  screen_protector: `<rect x="18" y="9" width="28" height="46" rx="5"/><path d="M22 13h20v38H22z" opacity=".45"/>
+         <path d="M46 9l6-4M52 5l-3 8" opacity=".7"/><path d="M30 30h4M32 28v4"/>`,
+  charger: `<rect x="16" y="18" width="32" height="28" rx="6"/><path d="M26 18v-6M38 18v-6"/>
+         <rect x="22" y="38" width="6" height="4" rx="1"/><rect x="30" y="38" width="6" height="4" rx="1"/>
+         <rect x="38" y="38" width="6" height="4" rx="1"/><path d="M27 26h10"/>`,
+  cable: `<path d="M14 16h6a4 4 0 0 1 4 4v10a8 8 0 0 0 8 8h8a8 8 0 0 1 8 8v6"/>
+         <rect x="8" y="12" width="7" height="8" rx="2"/><rect x="44" y="50" width="7" height="8" rx="2"/>`,
+  powerbank: `<rect x="18" y="12" width="28" height="40" rx="5"/><rect x="23" y="20" width="18" height="6" rx="2"/>
+         <path d="M23 32h10M23 38h14"/><circle cx="41" cy="44" r="3"/>`,
+  audio: `<path d="M14 34v-4a18 18 0 0 1 36 0v4"/><rect x="10" y="32" width="9" height="14" rx="4"/>
+         <rect x="45" y="32" width="9" height="14" rx="4"/>`,
+  car_mount: `<rect x="22" y="10" width="20" height="30" rx="4"/><path d="M32 40v8"/>
+         <path d="M22 52h20a4 4 0 0 0 4-4v-2H18v2a4 4 0 0 0 4 4Z"/>`,
+  smartwatch: `<rect x="20" y="18" width="24" height="28" rx="6"/><path d="M26 18v-8h12v8M26 46v8h12v-8"/>
+         <path d="M32 27v5l4 2"/>`,
+};
+const artFor = (c) => ART[c] || ART.case;
+
+/** Product tile using the placeholder artwork. */
+const media = (label, ratio = '1', category = null) => `
   <div class="media media--empty" style="aspect-ratio:${ratio}">
-    ${icon('package', 'icon icon--xl')}
+    ${
+      category
+        ? `<svg viewBox="0 0 64 64" width="112" height="112" fill="none" stroke="currentColor"
+             stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"
+             style="opacity:.55">${artFor(category)}</svg>`
+        : icon('package', 'icon icon--xl')
+    }
     <span class="visually-hidden">${label}</span>
   </div>`;
 
@@ -194,7 +233,7 @@ const compat = (p, variant = 'inline') => {
 const card = (p, lcp = false) => `
 <div class="card" data-product-handle="${p.category}-${p.price}">
   <div class="card__media">
-    <a class="card__media-link" href="./product.html" tabindex="-1" aria-hidden="true">${media(p.title)}</a>
+    <a class="card__media-link" href="./product.html" tabindex="-1" aria-hidden="true">${media(p.title, '1', p.category)}</a>
     <div class="card__media-overlay">${
       p.badge
         ? `<ul class="badges" role="list"><li class="badge badge--${p.badge}">${p.badge === 'sale' ? t.products.on_sale : t.products.new}</li></ul>`
@@ -281,7 +320,7 @@ const header = (current) => `
     <button class="header__menu-toggle icon-button" type="button" aria-expanded="false">
       ${icon('menu', 'icon icon--lg')}<span class="visually-hidden">${t.general.accessibility.open_menu}</span>
     </button>
-    <a class="header__logo" href="./index.html"><span class="header__wordmark text-h3">Covers by Mobile</span></a>
+    <a class="header__logo" href="./index.html"><span class="header__wordmark text-h3">Covers by Mobile<small style="display:block;font-size:9px;letter-spacing:.18em;font-weight:600;color:var(--color-text-secondary);margin-top:-2px">ZAM ZAM</small></span></a>
 
     <div class="header__search header__search--desktop">
       <div class="search-bar">
@@ -839,14 +878,14 @@ writeFileSync(
     <div class="product__media-column">
       <media-gallery class="gallery">
         <div class="gallery__viewport">
-          ${[1, 2, 3].map((n) => `<figure class="gallery__item">${media('Immagine ' + n)}</figure>`).join('')}
+          ${[1, 2, 3].map((n) => `<figure class="gallery__item">${media('Immagine ' + n, '1', pdp.category)}</figure>`).join('')}
         </div>
         <div class="gallery__thumbs">
           ${[1, 2, 3]
             .map(
               (n) =>
                 `<button class="gallery__thumb${n === 1 ? ' is-active' : ''}" type="button" aria-current="${n === 1}">
-                  ${icon('package', 'icon')}<span class="visually-hidden">${t.products.gallery_thumbnail.replace('{{ number }}', n)}</span>
+  <svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:100%;height:100%;opacity:.5">${artFor(pdp.category)}</svg><span class="visually-hidden">${t.products.gallery_thumbnail.replace('{{ number }}', n)}</span>
                 </button>`
             )
             .join('')}
