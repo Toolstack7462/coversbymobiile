@@ -29,6 +29,12 @@
     "store_province": "AQ",
     "store_latitude": "42.0614846",
     "store_longitude": "13.9200965",
-    "store_directions_url": "https://www.google.com/maps/dir/?api=1&destination=42.0614846%2C13.9200965"
+    "store_directions_url": "https://www.google.com/maps/dir/?api=1&destination=42.0614846%2C13.9200965",
+    "store_hours_display": "Tutti i giorni 09:00–20:00",
+    "store_hours_schema": "Mo-Su 09:00-20:00",
+
+    "business_phone": "+39 350 881 6173",
+    "business_whatsapp": "393508816173",
+    "business_email": "afridinaseer068@gmail.com"
   }
 }

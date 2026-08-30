@@ -22,12 +22,21 @@
 
 import { writeFileSync, mkdirSync, copyFileSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { compileCss, locale, icon, root } from './lib/compile-css.mjs';
+import { compileCss, locale, icon, root, RTL } from './lib/compile-css.mjs';
 
 const out = join(root, 'tests', 'preview');
 mkdirSync(join(out, 'assets'), { recursive: true });
 
-const t = locale();
+let LANG = 'it';
+let t = locale();
+
+/* Only languages that exist as real locale files. Listing more would be an empty claim. */
+const LANGUAGES = [
+  ['Italiano', 'it', 'index'],
+  ['English', 'en', 'index'],
+  ['Română', 'ro', 'index'],
+  ['العربية', 'ar', 'index-ar'],
+];
 
 /* ── Real assets ──────────────────────────────────────────────────────── */
 
@@ -352,7 +361,9 @@ const footer = () => `
         67039 Sulmona (AQ)<br>Italia
       </address>
       <ul class="footer__contact text-ui" role="list">
-        <li><a href="#">${icon('map-pin', 'icon icon--sm')}Indicazioni stradali</a></li>
+        <li><a href="tel:+393508816173">${icon('phone', 'icon icon--sm')}+39 350 881 6173</a></li>
+        <li><a href="https://wa.me/393508816173" target="_blank" rel="noopener">${icon('whatsapp', 'icon icon--sm')}WhatsApp</a></li>
+        <li><a href="https://www.google.com/maps/dir/?api=1&destination=42.0614846%2C13.9200965" target="_blank" rel="noopener">${icon('map-pin', 'icon icon--sm')}Indicazioni stradali</a></li>
       </ul>
     </div>
     ${['Acquista', 'Assistenza', 'Informazioni legali']
@@ -392,26 +403,20 @@ const footer = () => `
           <details class="localization__group">
             <summary class="localization__toggle">
               ${icon('globe', 'icon icon--sm')}
-              <span class="localization__current text-ui">Italiano</span>
+              <span class="localization__current text-ui">${LANGUAGES.find(([, c]) => c === LANG)[0]}</span>
               ${icon('chevron-down', 'icon icon--sm localization__chevron')}
             </summary>
             <div class="localization__panel">
               <p class="localization__heading eyebrow">${t.localization.language_label}</p>
               <ul class="localization__list" role="list">
-                ${[
-                  ['Italiano', 'it', true],
-                  ['English', 'en', false],
-                  ['Română', 'ro', false],
-                  ['العربية', 'ar', false],
-                  ['Español', 'es', false],
-                  ['Français', 'fr', false],
-                  ['Deutsch', 'de', false],
-                ]
+                ${LANGUAGES
                   .map(
-                    ([label, code, cur]) =>
-                      `<li><button class="localization__option text-ui${cur ? ' is-current' : ''}" type="submit" lang="${code}"${cur ? ' aria-current="true"' : ''}>
+                    ([label, code, target]) => {
+                      const cur = code === LANG;
+                      return `<li><a class="localization__option text-ui${cur ? ' is-current' : ''}" href="./${target}.html" lang="${code}"${cur ? ' aria-current="true"' : ''}>
                         <span>${label}</span>${cur ? icon('check', 'icon icon--sm') : ''}
-                      </button></li>`
+                      </a></li>`;
+                    }
                   )
                   .join('')}
               </ul>
@@ -472,7 +477,7 @@ const previewBar = (current) => {
 };
 
 const page = (title, current, body, extraHead = '') => `<!doctype html>
-<html lang="it">
+<html lang="${LANG}" dir="${RTL.includes(LANG) ? 'rtl' : 'ltr'}">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
@@ -547,12 +552,7 @@ ${iconTemplates}
 
 /* ── Pages ────────────────────────────────────────────────────────────── */
 
-writeFileSync(
-  join(out, 'index.html'),
-  page(
-    'Home',
-    'index.html',
-    `
+const homeBody = () => `
 <section class="hero">
   <div class="hero__inner page">
     <div class="hero__content">
@@ -681,9 +681,9 @@ writeFileSync(
         .join('')}
     </ul>
   </div>
-</section>`
-  )
-);
+</section>`;
+
+writeFileSync(join(out, 'index.html'), page('Home', 'index.html', homeBody()));
 
 writeFileSync(
   join(out, 'collection.html'),
@@ -995,7 +995,7 @@ writeFileSync(
     <h1 class="text-h1">Covers by Mobile</h1>
     <p class="text-body text-secondary text-measure">
       Centro Commerciale Il Nuovo Borgo, Sulmona. Accessori per smartphone, riparazioni e
-      protezione tagliata su misura. Telefono e orari sono ancora da configurare.
+      protezione tagliata su misura. Aperto tutti i giorni 09:00–20:00.
     </p>
   </header>
 
@@ -1053,10 +1053,11 @@ writeFileSync(
         </address>
         <div class="storepage__block">
           <h3 class="eyebrow">${t.store.hours}</h3>
-          <p class="text-ui">[Orari da configurare]</p>
+          <p class="text-ui">Tutti i giorni 09:00–20:00</p>
         </div>
         <ul class="storepage__contact" role="list">
-          <li><span class="storepage__contact-link">${icon('phone', 'icon icon--sm')}[Telefono da configurare]</span></li>
+          <li><a class="storepage__contact-link" href="tel:+393508816173">${icon('phone', 'icon icon--sm')}+39 350 881 6173</a></li>
+          <li><a class="storepage__contact-link" href="https://wa.me/393508816173" target="_blank" rel="noopener">${icon('whatsapp', 'icon icon--sm')}WhatsApp</a></li>
         </ul>
         <a class="button button--primary button--full" href="https://www.google.com/maps/dir/?api=1&destination=42.0614846%2C13.9200965" target="_blank" rel="noopener">
           ${icon('map-pin', 'icon icon--sm')}${t.store.directions}
@@ -1164,6 +1165,16 @@ writeFileSync(
 </div>`
   )
 );
+
+/* ── Arabic (RTL) ──────────────────────────────────────────────────────────
+   Same builders, same CSS, different locale file and direction. This is a real demonstration
+   that the theme mirrors: the layout uses logical properties throughout, so setting `dir` is
+   genuinely all that changes. Strings come from locales/ar.json, not from a mock. */
+LANG = 'ar';
+t = locale('ar.json');
+writeFileSync(join(out, 'index-ar.html'), page('الصفحة الرئيسية', 'index.html', homeBody()));
+LANG = 'it';
+t = locale();
 
 console.log('Preview built at tests/preview/');
 for (const f of [

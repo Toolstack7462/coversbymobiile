@@ -74,10 +74,13 @@ export function compileCss({ fonts = false } = {}) {
   return parts.join('\n');
 }
 
-/** Reads the real Italian locale so the preview shows real translated strings. */
-export function locale() {
-  return JSON.parse(readFileSync(join(root, 'locales', 'it.default.json'), 'utf8'));
+/** Reads a real locale file so the preview shows real translated strings. */
+export function locale(file = 'it.default.json') {
+  return JSON.parse(readFileSync(join(root, 'locales', file), 'utf8'));
 }
+
+/** Locales that read right-to-left. Mirrors the list in layout/theme.liquid. */
+export const RTL = ['ar', 'he', 'fa', 'ur', 'ps', 'sd', 'yi', 'dv', 'ckb'];
 
 /** Renders one icon from snippets/icon.liquid by extracting its `when` branch. */
 export function icon(name, cls = 'icon') {

@@ -254,10 +254,28 @@ through a `case` of **static** translation keys — because dynamic keys defeat 
 ## 7. Localisation
 
 ```
-it keys: 428    en keys: 428    missing in en: 0    extra in en: 0
+it.default.json  432 keys
+en.json          432 keys | missing: none | extra: none
+ro.json          432 keys | missing: none | extra: none
+ar.json          464 keys | missing: none | extra: none
 ```
 
-**PASS.** Italian is the default (`it.default.json`); English is complete with exact key parity.
+**PASS.** Four complete locales. Italian is the default; English, Romanian and Arabic all have
+exact key parity, verified by a script that walks the Italian structure and fails on any missing
+or extra key.
+
+Arabic carries **464** keys rather than 432 because Arabic has six CLDR plural categories
+(zero, one, two, few, many, other) against Italian's two. The eight pluralised groups therefore
+get the full set. A two-form approximation would read as broken Arabic for counts like 3 or 11.
+
+Placeholder integrity is asserted too: every `{{ }}` token in the Italian source survives into
+each translation. The only intentional exceptions are Arabic `zero`/`one`/`two`, which omit the
+numeral because Arabic expresses those with the noun form itself (منتج واحد, منتجان) — writing
+"1 منتج" would be wrong.
+
+**RTL** is real, not theoretical: `layout/theme.liquid` sets `dir` from the active locale, and a
+rendered Arabic page was verified mirrored (logo right-aligned at x=1220 of a 1440 viewport, no
+horizontal overflow, no console errors).
 Schema locales (`it.default.schema.json`, `en.schema.json`) cover every `t:` key used in section
 schemas — verified by Theme Check.
 

@@ -189,7 +189,53 @@ theme deliberately does not fake it.
 
 ---
 
-## 6. Getting help
+## 6. Languages
+
+The theme ships four complete locale files:
+
+| Language | File | Notes |
+|---|---|---|
+| Italiano | `locales/it.default.json` | Default |
+| English | `locales/en.json` | |
+| Română | `locales/ro.json` | Italy's largest foreign community |
+| العربية | `locales/ar.json` | Right-to-left; six CLDR plural forms |
+
+**Shipping a locale file is not the same as enabling a language.** To switch one on:
+**Settings → Markets → your market → Languages → Add language.** The selector in the footer and
+the mobile drawer then shows it automatically — the theme hardcodes no language list, so nothing
+needs editing here.
+
+### What the theme translates, and what it does not
+
+This distinction matters and is easy to misread:
+
+| Translated by the theme's locale files | NOT translated by the theme |
+|---|---|
+| Buttons, labels, form errors, status messages | Product titles and descriptions |
+| Compatibility wording, stock and pickup states | Collection names and descriptions |
+| Cart, search, filter and account interface | Navigation menu labels |
+| Cookie banner, footer headings | Section headings you type in the theme editor |
+| Specification row labels | Metafield values (materials, colours, notes) |
+
+Everything in the right column is **your content**, held in Shopify, and is translated with
+**Translate & Adapt** (free). Install it, and it will also auto-translate the theme locale files
+for any additional language you enable — so Spanish, French or German is a Markets setting plus a
+Translate & Adapt pass, not a theme change.
+
+### Arabic and right-to-left
+
+Enabling Arabic mirrors the whole layout automatically: `layout/theme.liquid` sets `dir="rtl"`
+from the active locale, and the CSS uses logical properties throughout, so the header, drawers,
+product cards and filters all flip correctly. The same applies to Hebrew, Persian and Urdu if you
+ever add them.
+
+**Have a native speaker review the Romanian and Arabic before launch.** They were written
+carefully, not machine-translated, but no interface should ship in a language nobody on the team
+reads — the same standard applied to the legal pages.
+
+---
+
+## 7. Getting help
 
 | Topic | Document |
 |---|---|
