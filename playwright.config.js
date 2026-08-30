@@ -15,6 +15,17 @@ export default defineConfig({
   fullyParallel: true,
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 1 : 0,
+
+  /**
+   * Four browser projects fan out to a lot of concurrent instances, and Firefox in particular
+   * is slow to launch. On a loaded machine the default per-test timeout was tight enough to
+   * produce spurious keyboard failures that passed on a clean re-run. A gate that goes red
+   * under load teaches people to ignore it, so the budget is explicit and the worker count is
+   * capped rather than scaling with core count.
+   */
+  timeout: 45_000,
+  expect: { timeout: 10_000 },
+  workers: process.env.CI ? 2 : 4,
   reporter: process.env.CI ? [['list'], ['html', { open: 'never' }]] : 'list',
 
   globalSetup: './tests/global-setup.mjs',
