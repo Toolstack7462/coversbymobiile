@@ -1,0 +1,188 @@
+{% comment %}
+  Physical store and in-store pickup.
+
+  The shop is the merchant's real advantage over a marketplace, so it gets a proper section on
+  the homepage rather than a line in the footer.
+
+  Every value is read from theme settings. If the store is not configured the whole section is
+  absent — a homepage promising collection at a shop whose address nobody has entered would send
+  real customers to a door that is not there.
+
+  The map is a STATIC image until the customer consents to third-party cookies. No map iframe,
+  no tracker, no request to a third party before consent.
+{% endcomment %}
+
+{%- liquid
+  assign has_store = false
+  if settings.store_name != blank and settings.store_street != blank and settings.store_city != blank
+    assign has_store = true
+  endif
+-%}
+
+{%- if has_store -%}
+  <section class="section storepick">
+    <div class="page">
+      <div class="storepick__layout">
+        <div class="storepick__content">
+          {%- if section.settings.eyebrow != blank -%}
+            <p class="eyebrow">{{ section.settings.eyebrow }}</p>
+          {%- endif -%}
+
+          <h2 class="text-h2">{%- if section.settings.heading != blank -%}{{ section.settings.heading }}{%- else -%}{{ 'store.title' | t }}{%- endif -%}</h2>
+
+          {%- if section.settings.body != blank -%}
+            <p class="text-body text-secondary">{{ section.settings.body }}</p>
+          {%- endif -%}
+
+          <address class="storepick__address text-body">
+            <strong>{{ settings.store_name }}</strong><br>
+            {{ settings.store_street }}<br>
+            {{ settings.store_postcode }} {{ settings.store_city }}
+            {%- if settings.store_province != blank %} ({{ settings.store_province }}){% endif %}
+          </address>
+
+          {%- if settings.store_hours_display != blank -%}
+            <div class="storepick__hours">
+              <p class="eyebrow">{{ 'store.hours' | t }}</p>
+              <p class="text-ui">{{ settings.store_hours_display | newline_to_br }}</p>
+            </div>
+          {%- endif -%}
+
+          <ul class="storepick__features" role="list">
+            <li>
+              {% render 'icon', name: 'package', class: 'icon--sm' %}
+              <span class="text-ui">{{ 'pickup.title' | t }}</span>
+            </li>
+            {%- if settings.pickup_processing_time != blank -%}
+              <li>
+                {% render 'icon', name: 'clock', class: 'icon--sm' %}
+                <span class="text-ui">
+                  {{ 'pickup.processing_time' | t: time: settings.pickup_processing_time }}
+                </span>
+              </li>
+            {%- endif -%}
+          </ul>
+
+          <div class="storepick__actions">
+            <a class="button button--primary" href="{{ section.settings.link | default: '/pages/negozio' }}">
+              {%- if section.settings.link_label != blank -%}{{ section.settings.link_label }}{%- else -%}{{ 'store.title' | t }}{%- endif -%}
+            </a>
+
+            {%- if settings.store_directions_url != blank -%}
+              <a class="button button--secondary" href="{{ settings.store_directions_url }}" rel="noopener" target="_blank">
+                {% render 'icon', name: 'map-pin', class: 'icon--sm' %}
+                {{ 'store.directions' | t }}
+                <span class="visually-hidden">({{ 'general.accessibility.new_window' | t }})</span>
+              </a>
+            {%- endif -%}
+          </div>
+        </div>
+
+        {%- if section.settings.image != blank or settings.store_map_image != blank -%}
+          {%- assign store_image = section.settings.image | default: settings.store_map_image -%}
+          <div class="storepick__media">
+            <div class="media media--cover">
+              <img
+                src="{{ store_image | image_url: width: 900 }}"
+                srcset="
+                  {{ store_image | image_url: width: 600 }} 600w,
+                  {{ store_image | image_url: width: 900 }} 900w,
+                  {{ store_image | image_url: width: 1200 }} 1200w
+                "
+                sizes="(min-width: 990px) 45vw, 100vw"
+                alt="{{ store_image.alt | default: settings.store_name | escape }}"
+                width="{{ store_image.width }}"
+                height="{{ store_image.height }}"
+                loading="lazy"
+              >
+            </div>
+          </div>
+        {%- endif -%}
+      </div>
+    </div>
+  </section>
+{%- endif -%}
+
+{% stylesheet %}
+  .storepick {
+    background-color: var(--color-surface);
+    border-block: var(--border-width) solid var(--color-border);
+  }
+
+  .storepick__layout {
+    display: grid;
+    gap: var(--space-5);
+  }
+
+  .storepick__content {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-3);
+    justify-content: center;
+  }
+
+  .storepick__address {
+    font-style: normal;
+    margin: 0;
+  }
+
+  .storepick__hours p:last-child {
+    margin: 0;
+    color: var(--color-text-secondary);
+  }
+
+  .storepick__features {
+    list-style: none;
+    display: grid;
+    gap: var(--space-2);
+  }
+
+  .storepick__features li {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    color: var(--color-success-text);
+  }
+
+  .storepick__actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-2);
+    margin-block-start: var(--space-2);
+  }
+
+  .storepick__media .media {
+    --media-ratio: 4 / 3;
+    border-radius: var(--radius-editorial);
+    border: var(--border-width) solid var(--color-border);
+  }
+
+  @media (min-width: 990px) {
+    .storepick__layout {
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+      gap: var(--space-7);
+      align-items: center;
+    }
+  }
+{% endstylesheet %}
+
+{% schema %}
+{
+  "name": "t:names.store_pickup",
+  "tag": "section",
+  "class": "store-pickup-section",
+  "settings": [
+    { "type": "text", "id": "eyebrow", "label": "t:labels.eyebrow" },
+    { "type": "text", "id": "heading", "label": "t:labels.heading" },
+    { "type": "text", "id": "body", "label": "t:labels.body" },
+    { "type": "image_picker", "id": "image", "label": "t:labels.image" },
+    { "type": "text", "id": "link_label", "label": "t:labels.link_label" },
+    { "type": "url", "id": "link", "label": "t:labels.link" },
+    {
+      "type": "paragraph",
+      "content": "Nome, indirizzo e orari provengono dalle impostazioni del tema. Se non sono compilati, questa sezione non viene mostrata."
+    }
+  ],
+  "presets": [{ "name": "t:names.store_pickup", "category": "t:categories.trust" }]
+}
+{% endschema %}

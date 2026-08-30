@@ -1,0 +1,144 @@
+{% comment %}
+  Guide article.
+
+  Article structured data is emitted only from fields that genuinely exist. No fabricated author,
+  no invented publish date, no rating.
+{% endcomment %}
+
+<div class="article page">
+  {% render 'breadcrumbs' %}
+
+  <article class="article__inner">
+    <header class="article__header">
+      <p class="eyebrow">
+        {%- assign published = article.published_at | date: '%d/%m/%Y' -%}
+        {{- 'blog.published_on' | t: date: published -}}
+      </p>
+      <h1 class="text-h1">{{ article.title }}</h1>
+    </header>
+
+    {%- if article.image -%}
+      <div class="media media--cover article__hero">
+        <img
+          src="{{ article.image | image_url: width: 1400 }}"
+          srcset="
+            {{ article.image | image_url: width: 700 }} 700w,
+            {{ article.image | image_url: width: 1400 }} 1400w
+          "
+          sizes="(min-width: 990px) 760px, 100vw"
+          alt="{{ article.image.alt | default: article.title | escape }}"
+          width="{{ article.image.width }}"
+          height="{{ article.image.height }}"
+          loading="eager"
+          fetchpriority="high"
+        >
+      </div>
+    {%- endif -%}
+
+    <div class="rte article__body">{{ article.content }}</div>
+
+    {%- if blog.articles.size > 1 -%}
+      <section class="article__related">
+        <h2 class="text-h3">{{ 'blog.related_articles' | t }}</h2>
+        <ul class="article__related-list" role="list">
+          {%- assign shown = 0 -%}
+          {%- for related in blog.articles -%}
+            {%- if related.id != article.id and shown < 3 -%}
+              <li>
+                <a class="chip" href="{{ related.url }}">{{ related.title }}</a>
+              </li>
+              {%- assign shown = shown | plus: 1 -%}
+            {%- endif -%}
+          {%- endfor -%}
+        </ul>
+      </section>
+    {%- endif -%}
+  </article>
+</div>
+
+{%- comment -%}
+  Article schema, guarded on real data only.
+{%- endcomment -%}
+<script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "Article",
+    "headline": {{ article.title | json }},
+    "datePublished": {{ article.published_at | date: '%Y-%m-%dT%H:%M:%SZ' | json }}
+    {%- if article.image -%}
+      , "image": {{ article.image | image_url: width: 1200 | prepend: 'https:' | json }}
+    {%- endif -%}
+    {%- if article.author != blank -%}
+      , "author": { "@type": "Person", "name": {{ article.author | json }} }
+    {%- endif -%}
+    , "publisher": {
+      "@type": "Organization",
+      "name": {{ settings.business_legal_name | default: shop.name | json }}
+    }
+  }
+</script>
+
+{% stylesheet %}
+  .article {
+    padding-block: var(--space-5) var(--space-8);
+  }
+
+  .article__inner {
+    max-width: 760px;
+    margin-inline: auto;
+  }
+
+  .article__header {
+    display: grid;
+    gap: var(--space-2);
+    margin-block-end: var(--space-5);
+  }
+
+  .article__header h1 {
+    margin: 0;
+  }
+
+  .article__hero {
+    --media-ratio: 16 / 9;
+    border-radius: var(--radius-editorial);
+    border: var(--border-width) solid var(--color-border);
+    margin-block-end: var(--space-6);
+  }
+
+  .article__body {
+    font-size: var(--text-body);
+    line-height: 1.7;
+  }
+
+  .article__body h2 {
+    font-family: var(--font-heading);
+    font-size: var(--text-h3);
+    line-height: var(--text-h3-lh);
+    margin-block-start: var(--space-6);
+  }
+
+  .article__body img {
+    border-radius: var(--radius-card);
+  }
+
+  .article__related {
+    margin-block-start: var(--space-7);
+    padding-block-start: var(--space-5);
+    border-block-start: var(--border-width) solid var(--color-border);
+  }
+
+  .article__related-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-2);
+    margin-block-start: var(--space-3);
+    list-style: none;
+  }
+{% endstylesheet %}
+
+{% schema %}
+{
+  "name": "t:names.main_article",
+  "settings": []
+}
+{% endschema %}

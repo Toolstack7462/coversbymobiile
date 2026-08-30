@@ -1,0 +1,86 @@
+{% comment %}
+  Rich text. Used for the homepage SEO introduction and for any editorial paragraph.
+
+  Placed near the bottom of the homepage on purpose: supporting copy helps search engines
+  understand the store without pushing products down the page for a customer who came to buy.
+
+  Deliberately plain. Useful sentences that help someone choose beat a keyword list, and Google
+  has treated the latter as spam for well over a decade.
+{% endcomment %}
+
+<section class="section section--tight">
+  <div class="page">
+    <div class="richtext richtext--{{ section.settings.width }}">
+      {%- if section.settings.eyebrow != blank -%}
+        <p class="eyebrow">{{ section.settings.eyebrow }}</p>
+      {%- endif -%}
+
+      {%- if section.settings.heading != blank -%}
+        <h2 class="text-h3">{{ section.settings.heading }}</h2>
+      {%- endif -%}
+
+      {%- if section.settings.content != blank -%}
+        <div class="rte text-ui text-secondary">{{ section.settings.content }}</div>
+      {%- endif -%}
+
+      {%- if section.settings.link != blank and section.settings.link_label != blank -%}
+        <a class="richtext__link text-ui" href="{{ section.settings.link }}">
+          {{ section.settings.link_label }}
+          {% render 'icon', name: 'arrow-right', class: 'icon--sm' %}
+        </a>
+      {%- endif -%}
+    </div>
+  </div>
+</section>
+
+{% stylesheet %}
+  .richtext {
+    display: grid;
+    gap: var(--space-3);
+  }
+
+  .richtext--narrow {
+    max-width: 68ch;
+  }
+
+  .richtext h2 {
+    margin: 0;
+  }
+
+  .richtext__link {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-2);
+    min-height: var(--target-min);
+    width: fit-content;
+    color: var(--color-primary);
+    font-weight: var(--weight-semibold);
+    text-decoration: none;
+  }
+{% endstylesheet %}
+
+{% schema %}
+{
+  "name": "t:names.seo_intro",
+  "tag": "section",
+  "class": "rich-text-section",
+  "settings": [
+    { "type": "text", "id": "eyebrow", "label": "t:labels.eyebrow" },
+    { "type": "text", "id": "heading", "label": "t:labels.heading" },
+    { "type": "richtext", "id": "content", "label": "t:labels.body" },
+    { "type": "text", "id": "link_label", "label": "t:labels.link_label" },
+    { "type": "url", "id": "link", "label": "t:labels.link" },
+    {
+      "type": "select",
+      "id": "width",
+      "label": "t:labels.page_width",
+      "default": "narrow",
+      "options": [
+        { "value": "narrow", "label": "t:options.page_width.narrow" },
+        { "value": "wide", "label": "t:options.page_width.wide" }
+      ]
+    }
+  ],
+  "presets": [{ "name": "t:names.seo_intro", "category": "t:categories.editorial" }]
+}
+{% endschema %}

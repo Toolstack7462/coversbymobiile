@@ -1,0 +1,190 @@
+{% comment %}
+  Bundles ("Protezione completa", "Kit essenziale", "Kit auto").
+
+  INVENTORY HONESTY: each bundle block points at a REAL Shopify product — normally one created
+  with Shopify Bundles, so the components are inventory-aware and the bundle goes out of stock
+  when a component does. The theme does not invent bundle inventory, does not fabricate a
+  combined price and does not compute a saving from prices it cannot verify.
+
+  A saving is displayed only when the bundle product carries a legitimate compare-at price. See
+  snippets/price.liquid for the full rule.
+{% endcomment %}
+
+{%- assign bundle_blocks = section.blocks | where: 'type', 'bundle' -%}
+
+{%- if bundle_blocks.size > 0 -%}
+  <section class="section">
+    <div class="page">
+      <header class="section-head">
+        <div>
+          {%- if section.settings.eyebrow != blank -%}
+            <p class="eyebrow">{{ section.settings.eyebrow }}</p>
+          {%- endif -%}
+          <h2 class="text-h2">{{ section.settings.heading }}</h2>
+          {%- if section.settings.body != blank -%}
+            <p class="text-ui text-secondary">{{ section.settings.body }}</p>
+          {%- endif -%}
+        </div>
+      </header>
+
+      <ul class="bundles" role="list">
+        {%- for block in bundle_blocks -%}
+          {%- assign bundle = all_products[block.settings.product] -%}
+          {%- if bundle != blank and bundle != empty -%}
+            <li class="bundle surface" {{ block.shopify_attributes }}>
+              <div class="bundle__media">
+                {%- if bundle.featured_media -%}
+                  <div class="media">
+                    <img
+                      src="{{ bundle.featured_media | image_url: width: 600 }}"
+                      srcset="
+                        {{ bundle.featured_media | image_url: width: 300 }} 300w,
+                        {{ bundle.featured_media | image_url: width: 600 }} 600w
+                      "
+                      sizes="(min-width: 990px) 320px, 45vw"
+                      alt="{{ bundle.featured_media.alt | default: bundle.title | escape }}"
+                      width="{{ bundle.featured_media.preview_image.width }}"
+                      height="{{ bundle.featured_media.preview_image.height }}"
+                      loading="lazy"
+                    >
+                  </div>
+                {%- endif -%}
+              </div>
+
+              <div class="bundle__body">
+                <h3 class="bundle__title text-h3">
+                  <a href="{{ bundle.url }}">{{ block.settings.heading | default: bundle.title }}</a>
+                </h3>
+
+                {%- comment -%}
+                  Component list is merchant-authored text describing what is in the bundle. It
+                  is descriptive; the authoritative contents are the Shopify bundle itself.
+                {%- endcomment -%}
+                {%- if block.settings.components != blank -%}
+                  <div class="rte bundle__components text-ui text-secondary">
+                    {{ block.settings.components }}
+                  </div>
+                {%- endif -%}
+
+                {% render 'compat-badge', product: bundle %}
+
+                <div class="bundle__footer">
+                  {% render 'price', product: bundle, show_prior: true %}
+
+                  {%- if bundle.available -%}
+                    <a class="button button--primary" href="{{ bundle.url }}">
+                      {{ 'products.select_options' | t }}
+                    </a>
+                  {%- else -%}
+                    {%- comment -%}
+                      A bundle is unavailable as soon as any component is. Say so plainly rather
+                      than letting a customer reach an error at checkout.
+                    {%- endcomment -%}
+                    <span class="bundle__sold-out text-ui">
+                      {% render 'icon', name: 'alert-circle', class: 'icon--sm' %}
+                      {{ 'products.sold_out' | t }}
+                    </span>
+                  {%- endif -%}
+                </div>
+              </div>
+            </li>
+          {%- endif -%}
+        {%- endfor -%}
+      </ul>
+    </div>
+  </section>
+{%- endif -%}
+
+{% stylesheet %}
+  .bundles {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: var(--space-4);
+    list-style: none;
+  }
+
+  .bundle {
+    display: grid;
+    gap: var(--space-3);
+    padding: var(--space-4);
+  }
+
+  .bundle__media .media {
+    border-radius: var(--radius-control);
+    background-color: var(--color-surface-sunken);
+  }
+
+  .bundle__body {
+    display: grid;
+    gap: var(--space-2);
+  }
+
+  .bundle__title {
+    margin: 0;
+    font-size: var(--text-body);
+  }
+
+  .bundle__title a {
+    color: var(--color-ink);
+    text-decoration: none;
+  }
+
+  .bundle__title a:hover {
+    text-decoration: underline;
+  }
+
+  .bundle__components ul {
+    padding-inline-start: var(--space-4);
+  }
+
+  .bundle__footer {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-3);
+    margin-block-start: var(--space-2);
+  }
+
+  .bundle__sold-out {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-2);
+    color: var(--color-text-secondary);
+  }
+{% endstylesheet %}
+
+{% schema %}
+{
+  "name": "t:names.bundles",
+  "tag": "section",
+  "class": "bundles-section",
+  "max_blocks": 6,
+  "settings": [
+    { "type": "text", "id": "eyebrow", "label": "t:labels.eyebrow" },
+    { "type": "text", "id": "heading", "label": "t:labels.heading", "default": "Kit e bundle" },
+    { "type": "text", "id": "body", "label": "t:labels.body" },
+    {
+      "type": "paragraph",
+      "content": "Crea i bundle con l'app Shopify Bundles, cosi la disponibilita resta legata all'inventario reale dei componenti."
+    }
+  ],
+  "blocks": [
+    {
+      "type": "bundle",
+      "name": "Bundle",
+      "settings": [
+        { "type": "product", "id": "product", "label": "t:labels.product" },
+        { "type": "text", "id": "heading", "label": "t:labels.heading" },
+        {
+          "type": "richtext",
+          "id": "components",
+          "label": "Contenuto del kit",
+          "info": "Elenco descrittivo. Il contenuto effettivo e definito dal prodotto bundle in Shopify."
+        }
+      ]
+    }
+  ],
+  "presets": [{ "name": "t:names.bundles", "category": "t:categories.product" }]
+}
+{% endschema %}

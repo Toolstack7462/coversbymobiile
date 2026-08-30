@@ -1,0 +1,336 @@
+{% doc %}
+  Storefront filters and sorting.
+
+  ARCHITECTURE: this is a real `<form method="get">`. Filter state therefore lives in the URL,
+  which gives us four things the brief requires, for free:
+  browser back/forward works, a filtered view is shareable, the state survives a refresh, and
+  with JavaScript disabled the form still submits and filters. `assets/facets.js` only upgrades
+  it to apply without a full page load.
+
+  WHICH FILTERS APPEAR is decided by the merchant in Shopify Search & Discovery, per collection.
+  That is why chargers can show wattage and PD while cases show material and protection level,
+  without a line of conditional code here — and why an irrelevant filter never appears.
+
+  @param {object} results - `collection` or `search`; both expose `.filters`.
+  @param {string} [context] - 'drawer' for the mobile sheet, 'sidebar' for desktop.
+
+  @example
+  {% render 'facets', results: collection, context: 'sidebar' %}
+{% enddoc %}
+
+{%- liquid
+  assign sort_by = results.sort_by | default: results.default_sort_by
+  assign has_active = false
+  for filter in results.filters
+    if filter.active_values.size > 0
+      assign has_active = true
+      break
+    endif
+    if filter.type == 'price_range'
+      if filter.min_value.value != nil or filter.max_value.value != nil
+        assign has_active = true
+        break
+      endif
+    endif
+  endfor
+-%}
+
+<facet-form class="facets facets--{{ context | default: 'sidebar' }}">
+  <form
+    class="facets__form"
+    action="{{ results.url | default: request.path }}"
+    method="get"
+    data-facets-form
+  >
+    {%- comment -%}
+      Carry the search term and sort order through every filter submission, otherwise applying a
+      filter would silently drop the customer's query.
+    {%- endcomment -%}
+    {%- if results.terms != blank -%}
+      <input type="hidden" name="q" value="{{ results.terms | escape }}">
+      <input type="hidden" name="options[prefix]" value="last">
+    {%- endif -%}
+    <input type="hidden" name="sort_by" value="{{ sort_by }}" data-facets-sort>
+
+    {%- if has_active -%}
+      <div class="facets__active">
+        <div class="facets__active-head">
+          <span class="eyebrow">{{ 'facets.active_filters' | t }}</span>
+          <a class="facets__clear-all text-ui" href="{{ results.url }}?sort_by={{ sort_by }}">
+            {{ 'facets.clear_all' | t }}
+          </a>
+        </div>
+
+        <ul class="facets__chips" role="list">
+          {%- for filter in results.filters -%}
+            {%- for value in filter.active_values -%}
+              <li>
+                <a class="chip" href="{{ value.url_to_remove }}">
+                  <span>{{ value.label }}</span>
+                  {% render 'icon', name: 'close', class: 'icon--sm' %}
+                  <span class="visually-hidden">
+                    {{- 'facets.clear_filter' | t: name: value.label -}}
+                  </span>
+                </a>
+              </li>
+            {%- endfor -%}
+
+            {%- if filter.type == 'price_range' -%}
+              {%- if filter.min_value.value != nil or filter.max_value.value != nil -%}
+                <li>
+                  <a class="chip" href="{{ filter.url_to_remove }}">
+                    <span class="tabular">
+                      {{- filter.min_value.value | default: 0 | money }}–{{ filter.max_value.value | default: filter.range_max | money -}}
+                    </span>
+                    {% render 'icon', name: 'close', class: 'icon--sm' %}
+                    <span class="visually-hidden">
+                      {{- 'facets.clear_filter' | t: name: filter.label -}}
+                    </span>
+                  </a>
+                </li>
+              {%- endif -%}
+            {%- endif -%}
+          {%- endfor -%}
+        </ul>
+      </div>
+    {%- endif -%}
+
+    {%- for filter in results.filters -%}
+      <details class="facet" {% if filter.active_values.size > 0 or forloop.index <= 3 %}open{% endif %}>
+        <summary class="facet__summary">
+          <span class="facet__label text-ui">{{ filter.label }}</span>
+          {%- if filter.active_values.size > 0 -%}
+            <span class="facet__count tabular">{{ filter.active_values.size }}</span>
+          {%- endif -%}
+          {% render 'icon', name: 'chevron-down', class: 'facet__chevron icon--sm' %}
+        </summary>
+
+        <div class="facet__body">
+          {%- case filter.type -%}
+            {%- when 'boolean', 'list' -%}
+              <fieldset class="facet__fieldset">
+                <legend class="visually-hidden">{{ 'facets.filter_group' | t: name: filter.label }}</legend>
+                <ul class="facet__values" role="list">
+                  {%- for value in filter.values -%}
+                    {%- comment -%}
+                      A zero-count value that is not currently active is noise: it can only lead
+                      to an empty result set.
+                    {%- endcomment -%}
+                    {%- if value.count > 0 or value.active -%}
+                      <li>
+                        <label class="facet__option{% if value.count == 0 %} facet__option--empty{% endif %}">
+                          <input
+                            type="checkbox"
+                            name="{{ value.param_name }}"
+                            value="{{ value.value }}"
+                            {% if value.active %}checked{% endif %}
+                            {% if value.count == 0 and value.active == false %}disabled{% endif %}
+                          >
+                          {%- if value.image -%}
+                            <span class="facet__swatch" style="background-image: url({{ value.image | image_url: width: 40 }});"></span>
+                          {%- elsif value.swatch.color -%}
+                            <span class="facet__swatch" style="background-color: {{ value.swatch.color }};"></span>
+                          {%- endif -%}
+                          <span class="facet__option-label text-ui">{{ value.label }}</span>
+                          <span class="facet__option-count text-caption text-secondary tabular">
+                            {{- value.count -}}
+                          </span>
+                        </label>
+                      </li>
+                    {%- endif -%}
+                  {%- endfor -%}
+                </ul>
+              </fieldset>
+
+            {%- when 'price_range' -%}
+              <fieldset class="facet__fieldset facet__price">
+                <legend class="visually-hidden">{{ 'facets.price_range' | t }}</legend>
+
+                <div class="facet__price-field">
+                  <label class="text-caption text-secondary" for="{{ filter.min_value.param_name }}-min">
+                    {{- 'facets.price_from' | t -}}
+                  </label>
+                  <input
+                    class="input"
+                    id="{{ filter.min_value.param_name }}-min"
+                    type="number"
+                    name="{{ filter.min_value.param_name }}"
+                    value="{{ filter.min_value.value | money_without_currency | remove: ',' }}"
+                    min="0"
+                    max="{{ filter.range_max | money_without_currency | remove: ',' }}"
+                    inputmode="decimal"
+                  >
+                </div>
+
+                <div class="facet__price-field">
+                  <label class="text-caption text-secondary" for="{{ filter.max_value.param_name }}-max">
+                    {{- 'facets.price_to' | t -}}
+                  </label>
+                  <input
+                    class="input"
+                    id="{{ filter.max_value.param_name }}-max"
+                    type="number"
+                    name="{{ filter.max_value.param_name }}"
+                    value="{{ filter.max_value.value | money_without_currency | remove: ',' }}"
+                    min="0"
+                    max="{{ filter.range_max | money_without_currency | remove: ',' }}"
+                    inputmode="decimal"
+                  >
+                </div>
+              </fieldset>
+          {%- endcase -%}
+        </div>
+      </details>
+    {%- endfor -%}
+
+    {%- comment -%}
+      The submit button is the no-JavaScript path. facets.js hides it and applies on change,
+      but it must exist and must work.
+    {%- endcomment -%}
+    <button class="button button--primary button--full facets__submit" type="submit" data-facets-submit>
+      {{ 'facets.apply' | t }}
+    </button>
+  </form>
+</facet-form>
+
+{% stylesheet %}
+  .facets__form {
+    display: grid;
+    gap: var(--space-2);
+  }
+
+  .facets__active {
+    padding-block-end: var(--space-3);
+    border-block-end: var(--border-width) solid var(--color-border);
+  }
+
+  .facets__active-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-3);
+    margin-block-end: var(--space-2);
+  }
+
+  .facets__clear-all {
+    color: var(--color-primary);
+    font-weight: var(--weight-medium);
+    min-height: var(--target-min);
+    display: inline-flex;
+    align-items: center;
+  }
+
+  .facets__chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-2);
+    list-style: none;
+  }
+
+  .facet {
+    border-block-end: var(--border-width) solid var(--color-border);
+  }
+
+  .facet__summary {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    min-height: 52px;
+    font-weight: var(--weight-semibold);
+  }
+
+  .facet__label {
+    flex: 1;
+    font-weight: var(--weight-semibold);
+  }
+
+  .facet__count {
+    display: grid;
+    place-items: center;
+    min-width: 20px;
+    height: 20px;
+    padding-inline: 5px;
+    border-radius: var(--radius-chip);
+    background-color: var(--color-primary);
+    color: var(--color-surface);
+    font-size: var(--text-caption);
+  }
+
+  .facet[open] .facet__chevron {
+    transform: rotate(180deg);
+  }
+
+  .facet__body {
+    padding-block-end: var(--space-3);
+  }
+
+  .facet__fieldset {
+    border: 0;
+    padding: 0;
+    margin: 0;
+  }
+
+  .facet__values {
+    list-style: none;
+    display: grid;
+    gap: 2px;
+    /* A long colour or device list scrolls inside the facet rather than pushing the page. */
+    max-height: 280px;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+  }
+
+  .facet__option {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+    min-height: var(--target-min);
+    padding-inline: var(--space-1);
+    border-radius: var(--radius-control);
+    cursor: pointer;
+  }
+
+  .facet__option:hover {
+    background-color: var(--color-surface-sunken);
+  }
+
+  .facet__option input {
+    width: 18px;
+    height: 18px;
+    flex: none;
+    accent-color: var(--color-primary);
+  }
+
+  .facet__option--empty {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+
+  .facet__swatch {
+    width: 20px;
+    height: 20px;
+    flex: none;
+    border-radius: 50%;
+    border: var(--border-width) solid var(--color-border-strong);
+    background-size: cover;
+  }
+
+  .facet__option-label {
+    flex: 1;
+  }
+
+  .facet__price {
+    display: flex;
+    gap: var(--space-3);
+  }
+
+  .facet__price-field {
+    flex: 1;
+    display: grid;
+    gap: var(--space-1);
+  }
+
+  .facets__submit {
+    margin-block-start: var(--space-3);
+  }
+{% endstylesheet %}

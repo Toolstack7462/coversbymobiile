@@ -1,0 +1,525 @@
+{% comment %}
+  Global header: logo, prominent predictive search, device context, account, wishlist, cart,
+  and the desktop mega menu.
+
+  DESIGN INTENT: search is one of the most visually prominent controls in the store. For an
+  accessory catalogue the customer usually arrives knowing either a product type or a phone
+  model, and typing is faster than browsing a taxonomy. It therefore gets real estate, not an
+  icon that expands.
+
+  ACCESSIBILITY: the mega menu is built on native <details>/<summary>. That gives keyboard
+  operation, expanded state and screen-reader semantics for free — no ARIA and no JavaScript
+  required. `assets/navigation.js` only adds Escape-to-close and click-outside, both of which
+  are progressive enhancements.
+{% endcomment %}
+
+{%- liquid
+  assign menu = linklists[section.settings.menu]
+  assign sticky = ''
+  if settings.sticky_header
+    assign sticky = ' header--sticky'
+  endif
+-%}
+
+<header class="header{{ sticky }}">
+  <div class="header__inner page">
+    <button
+      class="header__menu-toggle icon-button"
+      type="button"
+      aria-expanded="false"
+      aria-controls="mobile-menu"
+      data-menu-toggle
+    >
+      {% render 'icon', name: 'menu', class: 'icon--lg' %}
+      <span class="visually-hidden">{{ 'general.accessibility.open_menu' | t }}</span>
+    </button>
+
+    <a class="header__logo" href="{{ routes.root_url }}">
+      {%- if settings.logo != blank -%}
+        {%- assign logo_height = settings.logo_width | divided_by: settings.logo.aspect_ratio -%}
+        <img
+          src="{{ settings.logo | image_url: width: 400 }}"
+          srcset="
+            {{ settings.logo | image_url: width: settings.logo_width }} 1x,
+            {{ settings.logo | image_url: width: settings.logo_width | times: 2 }} 2x
+          "
+          alt="{{ 'header.logo_home' | t: shop_name: shop.name | escape }}"
+          width="{{ settings.logo_width }}"
+          height="{{ logo_height }}"
+          style="width: {{ settings.logo_width }}px;"
+          loading="eager"
+        >
+      {%- else -%}
+        {%- comment -%}
+          No logo configured yet. Render the shop name as type rather than a placeholder image
+          box, so the header is never broken during setup.
+        {%- endcomment -%}
+        <span class="header__wordmark text-h3">{{ shop.name }}</span>
+      {%- endif -%}
+    </a>
+
+    <div class="header__search header__search--desktop">
+      {% render 'predictive-search', id: 'header-search-desktop' %}
+    </div>
+
+    <div class="header__actions">
+      <a class="header__action header__action--device" href="{{ section.settings.device_finder_url | default: '/pages/trova-dispositivo' }}">
+        {% render 'icon', name: 'device' %}
+        <span class="header__action-label">{{ 'header.find_device' | t }}</span>
+      </a>
+
+      {%- if shop.customer_accounts_enabled -%}
+        <a class="header__action" href="{{ routes.account_url }}">
+          {% render 'icon', name: 'account' %}
+          <span class="header__action-label">{{ 'header.account' | t }}</span>
+        </a>
+      {%- endif -%}
+
+      {%- if settings.enable_wishlist -%}
+        <a class="header__action" href="{{ section.settings.wishlist_url | default: '/pages/preferiti' }}">
+          {% render 'icon', name: 'heart' %}
+          <span class="header__action-label">{{ 'header.wishlist' | t }}</span>
+          <span class="header__count" data-wishlist-count hidden></span>
+        </a>
+      {%- endif -%}
+
+      <a
+        class="header__action header__action--cart"
+        href="{{ routes.cart_url }}"
+        data-cart-open
+      >
+        {% render 'icon', name: 'cart' %}
+        <span class="header__action-label">{{ 'header.cart' | t }}</span>
+        <span
+          class="header__count"
+          data-cart-count
+          {% if cart.item_count == 0 %}hidden{% endif %}
+        >{{ cart.item_count }}</span>
+        <span class="visually-hidden" data-cart-count-label>
+          {{- 'header.cart_count' | t: count: cart.item_count -}}
+        </span>
+      </a>
+    </div>
+  </div>
+
+  {%- comment -%} Mobile search sits full-width below the icon row, per the mobile spec. {%- endcomment -%}
+  <div class="header__search header__search--mobile page">
+    {% render 'predictive-search', id: 'header-search-mobile' %}
+  </div>
+
+  {%- comment -%}
+    Device context strip. Rendered empty and filled in by <device-chip> on the client, because
+    Shopify caches pages and a server-rendered device would leak between visitors.
+  {%- endcomment -%}
+  <device-chip class="device-strip page">
+    <div class="device-strip__inner surface--device" data-device-active hidden>
+      {% render 'icon', name: 'device', class: 'icon--sm' %}
+      <span class="device-strip__label text-ui">
+        {{ 'device.my_device' | t }}:
+        <strong data-device-name></strong>
+      </span>
+      <a class="device-strip__change text-ui" href="{{ section.settings.device_finder_url | default: '/pages/trova-dispositivo' }}">
+        {{ 'device.change_device' | t }}
+      </a>
+      <button class="device-strip__remove icon-button" type="button" data-device-remove>
+        {% render 'icon', name: 'close', class: 'icon--sm' %}
+        <span class="visually-hidden">{{ 'device.remove_device' | t }}</span>
+      </button>
+    </div>
+  </device-chip>
+
+  {%- if menu != blank and menu.links.size > 0 -%}
+    <nav class="header__nav" aria-label="{{ 'header.main_navigation' | t }}">
+      <ul class="header__nav-list page" role="list">
+        {%- for link in menu.links -%}
+          <li class="header__nav-item">
+            {%- if link.links.size > 0 -%}
+              <details class="mega" data-mega>
+                <summary class="header__nav-link">
+                  {{ link.title }}
+                  {% render 'icon', name: 'chevron-down', class: 'icon--sm' %}
+                </summary>
+
+                <div class="mega__panel">
+                  <div class="mega__inner page">
+                    <div class="mega__columns">
+                      {%- for child in link.links -%}
+                        <div class="mega__column">
+                          <a class="mega__heading text-ui" href="{{ child.url }}">{{ child.title }}</a>
+                          {%- if child.links.size > 0 -%}
+                            <ul class="mega__list" role="list">
+                              {%- for grandchild in child.links -%}
+                                <li>
+                                  <a class="mega__link text-ui" href="{{ grandchild.url }}">
+                                    {{- grandchild.title -}}
+                                  </a>
+                                </li>
+                              {%- endfor -%}
+                            </ul>
+                          {%- endif -%}
+                        </div>
+                      {%- endfor -%}
+                    </div>
+
+                    {%- comment -%}
+                      One restrained merchandising card per menu, and only where the merchant has
+                      configured it for this exact menu item. The mega menu is navigation first.
+                    {%- endcomment -%}
+                    {%- for block in section.blocks -%}
+                      {%- if block.type == 'promo' and block.settings.parent_title == link.title -%}
+                        <a class="mega__promo" href="{{ block.settings.link }}" {{ block.shopify_attributes }}>
+                          {%- if block.settings.image != blank -%}
+                            <div class="media media--cover">
+                              <img
+                                src="{{ block.settings.image | image_url: width: 480 }}"
+                                srcset="
+                                  {{ block.settings.image | image_url: width: 320 }} 320w,
+                                  {{ block.settings.image | image_url: width: 480 }} 480w
+                                "
+                                sizes="280px"
+                                alt="{{ block.settings.image.alt | escape }}"
+                                width="{{ block.settings.image.width }}"
+                                height="{{ block.settings.image.height }}"
+                                loading="lazy"
+                              >
+                            </div>
+                          {%- endif -%}
+                          {%- if block.settings.heading != blank -%}
+                            <span class="mega__promo-title text-ui">{{ block.settings.heading }}</span>
+                          {%- endif -%}
+                        </a>
+                      {%- endif -%}
+                    {%- endfor -%}
+                  </div>
+                </div>
+              </details>
+            {%- else -%}
+              <a class="header__nav-link" href="{{ link.url }}">{{ link.title }}</a>
+            {%- endif -%}
+          </li>
+        {%- endfor -%}
+      </ul>
+    </nav>
+  {%- endif -%}
+</header>
+
+{%- comment -%} Mobile navigation drawer. {%- endcomment -%}
+{% render 'mobile-menu', menu: menu, id: 'mobile-menu', device_url: section.settings.device_finder_url %}
+
+<script type="module" src="{{ 'navigation.js' | asset_url }}"></script>
+
+{% stylesheet %}
+  .header {
+    position: relative;
+    z-index: var(--z-header);
+    background-color: var(--color-surface);
+    border-block-end: var(--border-width) solid var(--color-border);
+  }
+
+  .header--sticky {
+    position: sticky;
+    inset-block-start: 0;
+  }
+
+  .header__inner {
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    align-items: center;
+    gap: var(--space-3);
+    min-height: var(--header-height);
+  }
+
+  .header__logo {
+    display: flex;
+    align-items: center;
+    text-decoration: none;
+  }
+
+  .header__wordmark {
+    font-family: var(--font-heading);
+    font-weight: var(--weight-display);
+    letter-spacing: -0.03em;
+    white-space: nowrap;
+  }
+
+  .header__menu-toggle {
+    margin-inline-start: calc(var(--space-2) * -1);
+  }
+
+  .header__search--desktop {
+    display: none;
+  }
+
+  .header__search--mobile {
+    padding-block-end: var(--space-3);
+  }
+
+  .header__actions {
+    display: flex;
+    align-items: center;
+    gap: var(--space-1);
+  }
+
+  .header__action {
+    position: relative;
+    display: inline-flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-half);
+    min-width: var(--target-min);
+    min-height: var(--target-min);
+    padding-inline: var(--space-2);
+    border-radius: var(--radius-control);
+    color: var(--color-ink);
+    text-decoration: none;
+    transition: background-color var(--duration-fast) var(--ease);
+  }
+
+  .header__action:hover {
+    background-color: var(--color-surface-sunken);
+  }
+
+  .header__action-label {
+    display: none;
+    font-size: var(--text-caption);
+    line-height: 1;
+  }
+
+  .header__action--device {
+    display: none;
+  }
+
+  .header__count {
+    position: absolute;
+    inset-block-start: 2px;
+    inset-inline-end: 2px;
+    min-width: 18px;
+    height: 18px;
+    padding-inline: var(--space-1);
+    display: grid;
+    place-items: center;
+    border-radius: var(--radius-chip);
+    background-color: var(--color-primary);
+    color: var(--color-surface);
+    font-size: var(--text-caption);
+    font-weight: var(--weight-bold);
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* ── Device strip ───────────────────────────────────────────────────
+     The signature element: whenever a device is selected it stays visible
+     across the whole storefront, marked with the lime edge and the notch. */
+
+  .device-strip__inner {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+    padding: var(--space-2) var(--space-3);
+    margin-block-end: var(--space-3);
+    background-color: var(--color-accent-surface);
+    border: var(--border-width) solid var(--color-border);
+    border-inline-start-width: 3px;
+    border-inline-start-color: var(--color-accent);
+  }
+
+  .device-strip__label {
+    flex: 1;
+    min-width: 0;
+    /* The exact device name must never be truncated — a half-shown model number is worse
+       than no model number. */
+    overflow-wrap: break-word;
+  }
+
+  .device-strip__change {
+    display: inline-flex;
+    align-items: center;
+    min-height: var(--target-min);
+    font-weight: var(--weight-semibold);
+    color: var(--color-primary);
+    white-space: nowrap;
+  }
+
+  .device-strip__remove {
+    width: var(--target-min);
+    height: var(--target-min);
+    flex: none;
+  }
+
+  /* ── Navigation ─────────────────────────────────────────────────────── */
+
+  .header__nav {
+    display: none;
+    border-block-start: var(--border-width) solid var(--color-border);
+  }
+
+  .header__nav-list {
+    display: flex;
+    align-items: center;
+    gap: var(--space-1);
+    list-style: none;
+  }
+
+  .header__nav-link {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-1);
+    min-height: var(--target-min);
+    padding-inline: var(--space-3);
+    font-size: var(--text-ui);
+    font-weight: var(--weight-medium);
+    color: var(--color-ink);
+    text-decoration: none;
+    border-radius: var(--radius-control);
+    white-space: nowrap;
+  }
+
+  .header__nav-link:hover {
+    background-color: var(--color-surface-sunken);
+  }
+
+  .mega[open] > .header__nav-link {
+    background-color: var(--color-surface-sunken);
+  }
+
+  .mega[open] > .header__nav-link .icon {
+    transform: rotate(180deg);
+  }
+
+  .mega__panel {
+    position: absolute;
+    inset-inline: 0;
+    background-color: var(--color-surface);
+    border-block: var(--border-width) solid var(--color-border);
+    box-shadow: var(--shadow-menu);
+  }
+
+  .mega__inner {
+    display: flex;
+    gap: var(--space-6);
+    padding-block: var(--space-6);
+  }
+
+  .mega__columns {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: var(--space-5) var(--space-6);
+    flex: 1;
+  }
+
+  .mega__heading {
+    display: block;
+    margin-block-end: var(--space-2);
+    font-weight: var(--weight-semibold);
+    color: var(--color-ink);
+    text-decoration: none;
+  }
+
+  .mega__list {
+    list-style: none;
+    display: grid;
+    gap: var(--space-1);
+  }
+
+  .mega__link {
+    display: block;
+    padding-block: var(--space-1);
+    color: var(--color-text-secondary);
+    text-decoration: none;
+  }
+
+  .mega__link:hover {
+    color: var(--color-ink);
+  }
+
+  .mega__promo {
+    flex: none;
+    width: 280px;
+    text-decoration: none;
+  }
+
+  .mega__promo .media {
+    border-radius: var(--radius-card);
+    --media-ratio: 4 / 3;
+  }
+
+  .mega__promo-title {
+    display: block;
+    margin-block-start: var(--space-2);
+    font-weight: var(--weight-semibold);
+  }
+
+  @media (min-width: 750px) {
+    .header__action-label {
+      display: block;
+    }
+  }
+
+  @media (min-width: 990px) {
+    .header__menu-toggle,
+    .header__search--mobile {
+      display: none;
+    }
+
+    .header__inner {
+      grid-template-columns: auto minmax(0, 1fr) auto;
+      gap: var(--space-6);
+    }
+
+    .header__search--desktop {
+      display: block;
+    }
+
+    .header__action--device {
+      display: inline-flex;
+    }
+
+    .header__nav {
+      display: block;
+    }
+  }
+{% endstylesheet %}
+
+{% schema %}
+{
+  "name": "t:names.header",
+  "class": "header-section",
+  "enabled_on": { "groups": ["header"] },
+  "settings": [
+    {
+      "type": "link_list",
+      "id": "menu",
+      "label": "t:labels.menu",
+      "default": "main-menu"
+    },
+    {
+      "type": "url",
+      "id": "device_finder_url",
+      "label": "Pagina «Trova il tuo dispositivo»"
+    },
+    {
+      "type": "url",
+      "id": "wishlist_url",
+      "label": "Pagina preferiti"
+    }
+  ],
+  "blocks": [
+    {
+      "type": "promo",
+      "name": "Immagine nel mega menu",
+      "limit": 4,
+      "settings": [
+        {
+          "type": "text",
+          "id": "parent_title",
+          "label": "Voce di menu",
+          "info": "Deve corrispondere esattamente al titolo della voce di primo livello, ad esempio Cover."
+        },
+        { "type": "image_picker", "id": "image", "label": "t:labels.image" },
+        { "type": "text", "id": "heading", "label": "t:labels.heading" },
+        { "type": "url", "id": "link", "label": "t:labels.link" }
+      ]
+    }
+  ]
+}
+{% endschema %}

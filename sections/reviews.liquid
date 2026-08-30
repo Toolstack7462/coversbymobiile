@@ -1,0 +1,55 @@
+{% comment %}
+  Customer reviews.
+
+  THE THEME SHIPS NO REVIEW CONTENT AND NO STAR RATINGS OF ITS OWN.
+
+  This section is a host for an approved reviews app's app block. If no app block is added, it
+  renders nothing at all — not a placeholder testimonial, not a row of five-star cards, not
+  "Loved by 10,000 customers". Fabricated reviews are illegal under EU consumer law (Directive
+  (EU) 2019/2161, implemented in Italy), and no amount of "it's just a placeholder" survives a
+  merchant forgetting to replace it before launch.
+
+  Genuine reviews from a vetted app also feed AggregateRating structured data. See
+  docs/app-stack.md for how to choose one.
+{% endcomment %}
+
+{%- if section.blocks.size > 0 -%}
+  <section class="section">
+    <div class="page">
+      {%- if section.settings.heading != blank -%}
+        <header class="section-head">
+          <div>
+            {%- if section.settings.eyebrow != blank -%}
+              <p class="eyebrow">{{ section.settings.eyebrow }}</p>
+            {%- endif -%}
+            <h2 class="text-h2">{{ section.settings.heading }}</h2>
+          </div>
+        </header>
+      {%- endif -%}
+
+      {%- for block in section.blocks -%}
+        <div {{ block.shopify_attributes }}>
+          {%- render block -%}
+        </div>
+      {%- endfor -%}
+    </div>
+  </section>
+{%- endif -%}
+
+{% schema %}
+{
+  "name": "t:names.reviews",
+  "tag": "section",
+  "class": "reviews-section",
+  "settings": [
+    { "type": "text", "id": "eyebrow", "label": "t:labels.eyebrow" },
+    { "type": "text", "id": "heading", "label": "t:labels.heading", "default": "Recensioni" },
+    {
+      "type": "paragraph",
+      "content": "Aggiungi qui il blocco della tua app di recensioni. Senza un'app collegata la sezione non mostra nulla: il tema non genera mai recensioni o valutazioni fittizie."
+    }
+  ],
+  "blocks": [{ "type": "@app" }],
+  "presets": [{ "name": "t:names.reviews", "category": "t:categories.trust" }]
+}
+{% endschema %}

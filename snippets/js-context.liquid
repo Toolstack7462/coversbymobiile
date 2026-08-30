@@ -1,0 +1,90 @@
+{% doc %}
+  Emits the small amount of server state the theme's JavaScript needs: translated strings,
+  Shopify routes and shop formats.
+
+  Kept deliberately tiny. This is NOT a place to dump product JSON, variant matrices or
+  collection data — parsing a large blob on load is one of the main causes of poor INP, and the
+  performance budget is enforced by `npm run budgets`.
+
+  Every string here is translated, so no JavaScript file contains a hardcoded Italian sentence.
+
+  @example
+  {% render 'js-context' %}
+{% enddoc %}
+
+<script>
+  window.ITA = {
+    routes: {
+      root: {{ routes.root_url | json }},
+      cart: {{ routes.cart_url | json }},
+      cartAdd: {{ routes.cart_add_url | json }},
+      cartChange: {{ routes.cart_change_url | json }},
+      search: {{ routes.search_url | json }},
+      predictive: {{ routes.predictive_search_url | json }}
+    },
+    shop: {
+      moneyFormat: {{ shop.money_format | json }},
+      currency: {{ cart.currency.iso_code | json }},
+      locale: {{ request.locale.iso_code | json }}
+    },
+    strings: {
+      compat: {
+        exact: {{ 'compatibility.exact' | t: device: '{{ device }}' | json }},
+        exact_short: {{ 'compatibility.exact_short' | t: device: '{{ device }}' | json }},
+        compatible: {{ 'compatibility.compatible' | t: device: '{{ device }}' | json }},
+        universal: {{ 'compatibility.universal' | t | json }},
+        universal_short: {{ 'compatibility.universal_short' | t | json }},
+        adapter: {{ 'compatibility.adapter' | t | json }},
+        mismatch: {{ 'compatibility.mismatch' | t | json }},
+        select_device_prompt: {{ 'compatibility.select_device_prompt' | t | json }}
+      },
+      device: {
+        removed: {{ 'device.device_removed' | t | json }},
+        selected: {{ 'device.device_selected' | t: device: '{{ device }}' | json }},
+        noModels: {{ 'device.no_models_title' | t | json }}
+      },
+      consent: {
+        saved: {{ 'consent.saved' | t | json }}
+      },
+      products: {
+        adding: {{ 'products.adding' | t | json }},
+        added: {{ 'products.added' | t | json }},
+        unavailable: {{ 'products.unavailable' | t | json }},
+        addToWishlist: {{ 'products.add_to_wishlist' | t | json }},
+        removeFromWishlist: {{ 'products.remove_from_wishlist' | t | json }}
+      },
+      cart: {
+        countLabel: {{ 'header.cart_count.other' | t: count: '{{ count }}' | json }},
+        added: {{ 'cart.item_added' | t: title: '{{ title }}' | json }},
+        error: {{ 'cart.update_error' | t | json }},
+        quantityLimit: {{ 'cart.quantity_limit' | t: max: '{{ max }}' | json }}
+      },
+      wishlist: {
+        added: {{ 'wishlist.added' | t: title: '{{ title }}' | json }},
+        removed: {{ 'wishlist.removed' | t: title: '{{ title }}' | json }}
+      },
+      compare: {
+        limitReached: {{ 'compare.limit_reached' | t | json }},
+        differentCategory: {{ 'compare.different_category' | t | json }}
+      },
+      search: {
+        noResults: {{ 'search.no_results_title' | t: terms: '{{ terms }}' | json }},
+        status: {{ 'search.predictive_status.other' | t: count: '{{ count }}' | json }}
+      },
+      general: {
+        error: {{ 'general.states.generic_error' | t | json }},
+        networkError: {{ 'general.states.network_error' | t | json }}
+      }
+    }
+  };
+</script>
+
+{%- comment -%}
+  Icon templates for the few icons that JavaScript swaps at runtime (the compatibility badge
+  changes icon with state). Cloning a template avoids building SVG markup in JS, which would
+  otherwise mean innerHTML.
+{%- endcomment -%}
+{%- assign runtime_icons = 'shield-check,check-circle,info,alert-circle,alert-triangle,device,heart,heart-filled' | split: ',' -%}
+{%- for icon_name in runtime_icons -%}
+  <template id="ita-icon-{{ icon_name }}">{% render 'icon', name: icon_name %}</template>
+{%- endfor -%}

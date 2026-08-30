@@ -1,0 +1,193 @@
+{% comment %}
+  Cookie consent.
+
+  Built on Shopify's Customer Privacy API. No analytics, marketing or preference cookie is set
+  before the customer decides.
+
+  DARK-PATTERN RULES enforced here:
+  - "Accetta tutti" and "Rifiuta non necessari" are the SAME size, weight and prominence.
+    Rejecting must never be harder than accepting.
+  - Rejection is one click, exactly like acceptance. It is not buried inside "Personalizza".
+  - Nothing is pre-ticked except the strictly necessary category, which is genuinely required
+    and is therefore shown as permanently on rather than as a checkbox that does nothing.
+  - The banner does not block the page or obscure the first product view.
+{% endcomment %}
+
+<consent-banner class="consent" hidden>
+  <div class="consent__panel" role="dialog" aria-modal="false" aria-labelledby="consent-title" data-consent-panel>
+    <div class="consent__intro">
+      <h2 class="consent__title text-h3" id="consent-title">{{ 'consent.title' | t }}</h2>
+      <p class="text-ui text-secondary">
+        {{ 'consent.body' | t }}
+        {%- if settings.cookie_policy_page != blank -%}
+          <a href="{{ settings.cookie_policy_page.url }}">{{ 'general.actions.learn_more' | t }}</a>
+        {%- endif -%}
+      </p>
+    </div>
+
+    <div class="consent__preferences" hidden data-consent-preferences>
+      <fieldset class="consent__group">
+        <legend class="visually-hidden">{{ 'consent.preferences_title' | t }}</legend>
+
+        <div class="consent__category">
+          <div class="consent__category-head">
+            <span class="text-ui consent__category-name">{{ 'consent.category_necessary' | t }}</span>
+            <span class="consent__always text-caption">{{ 'consent.always_active' | t }}</span>
+          </div>
+          <p class="text-caption text-secondary">{{ 'consent.category_necessary_body' | t }}</p>
+        </div>
+
+        {%- comment -%}
+          Written out rather than looped over a key prefix. Building a translation key by
+          concatenation defeats static analysis (Theme Check cannot verify it exists) and a
+          missing key would then fail silently in front of a customer.
+        {%- endcomment -%}
+        <div class="consent__category">
+          <div class="consent__category-head">
+            <label class="consent__switch" for="consent-analytics">
+              <input type="checkbox" id="consent-analytics" data-consent-category="analytics">
+              <span class="text-ui consent__category-name">{{ 'consent.category_analytics' | t }}</span>
+            </label>
+          </div>
+          <p class="text-caption text-secondary">{{ 'consent.category_analytics_body' | t }}</p>
+        </div>
+
+        <div class="consent__category">
+          <div class="consent__category-head">
+            <label class="consent__switch" for="consent-marketing">
+              <input type="checkbox" id="consent-marketing" data-consent-category="marketing">
+              <span class="text-ui consent__category-name">{{ 'consent.category_marketing' | t }}</span>
+            </label>
+          </div>
+          <p class="text-caption text-secondary">{{ 'consent.category_marketing_body' | t }}</p>
+        </div>
+
+        <div class="consent__category">
+          <div class="consent__category-head">
+            <label class="consent__switch" for="consent-preferences">
+              <input type="checkbox" id="consent-preferences" data-consent-category="preferences">
+              <span class="text-ui consent__category-name">{{ 'consent.category_preferences' | t }}</span>
+            </label>
+          </div>
+          <p class="text-caption text-secondary">{{ 'consent.category_preferences_body' | t }}</p>
+        </div>
+      </fieldset>
+    </div>
+
+    <div class="consent__actions">
+      {%- comment -%}
+        Accept and reject are visually identical by design. Anything else is a dark pattern.
+      {%- endcomment -%}
+      <button class="button button--primary consent__button" type="button" data-consent-accept>
+        {{ 'consent.accept_all' | t }}
+      </button>
+      <button class="button button--primary consent__button" type="button" data-consent-reject>
+        {{ 'consent.reject_all' | t }}
+      </button>
+      <button class="button button--ghost consent__button" type="button" data-consent-customise>
+        {{ 'consent.customise' | t }}
+      </button>
+      <button class="button button--secondary consent__button" type="button" hidden data-consent-save>
+        {{ 'consent.save_preferences' | t }}
+      </button>
+    </div>
+  </div>
+</consent-banner>
+
+<script type="module" src="{{ 'consent.js' | asset_url }}"></script>
+
+{% stylesheet %}
+  .consent {
+    position: fixed;
+    inset-block-end: 0;
+    inset-inline: 0;
+    z-index: var(--z-consent);
+    padding: var(--space-4);
+    padding-block-end: calc(var(--space-4) + env(safe-area-inset-bottom));
+    pointer-events: none;
+  }
+
+  .consent__panel {
+    pointer-events: auto;
+    max-width: 560px;
+    margin-inline: auto;
+    padding: var(--space-5);
+    background-color: var(--color-surface);
+    border: var(--border-width) solid var(--color-border);
+    border-radius: var(--radius-editorial);
+    box-shadow: var(--shadow-dialog);
+  }
+
+  .consent__title {
+    margin: 0 0 var(--space-2);
+    font-family: var(--font-heading);
+  }
+
+  .consent__actions {
+    display: grid;
+    gap: var(--space-2);
+    margin-block-start: var(--space-4);
+  }
+
+  .consent__group {
+    border: 0;
+    padding: 0;
+    margin: var(--space-4) 0 0;
+    display: grid;
+    gap: var(--space-4);
+  }
+
+  .consent__category-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-3);
+    min-height: var(--target-min);
+  }
+
+  .consent__category-name {
+    font-weight: var(--weight-semibold);
+  }
+
+  .consent__switch {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+    cursor: pointer;
+  }
+
+  .consent__switch input {
+    width: 20px;
+    height: 20px;
+    accent-color: var(--color-primary);
+  }
+
+  .consent__always {
+    color: var(--color-success-text);
+    font-weight: var(--weight-semibold);
+  }
+
+  .consent__category p {
+    margin: 0;
+  }
+
+  @media (min-width: 600px) {
+    .consent__actions {
+      grid-template-columns: 1fr 1fr;
+    }
+
+    /* "Personalizza" and "Salva" span the row so the two primary choices sit side by side at
+       identical width. */
+    .consent__actions [data-consent-customise],
+    .consent__actions [data-consent-save] {
+      grid-column: 1 / -1;
+    }
+  }
+{% endstylesheet %}
+
+{% schema %}
+{
+  "name": "t:names.consent_banner",
+  "settings": []
+}
+{% endschema %}

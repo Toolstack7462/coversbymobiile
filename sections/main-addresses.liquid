@@ -1,0 +1,191 @@
+{% comment %}
+  Address book.
+
+  Uses Shopify's native address form, including its country/province selector, so address
+  formats stay correct for every market the merchant sells into.
+{% endcomment %}
+
+<div class="addresses page">
+  <header class="addresses__header">
+    <h1 class="text-h1">{{ 'customers.account.addresses' | t }}</h1>
+    <a class="button button--secondary button--small" href="{{ routes.account_url }}">
+      {{ 'general.actions.back' | t }}
+    </a>
+  </header>
+
+  {%- paginate customer.addresses by 6 -%}
+    <div class="addresses__grid">
+      {%- for address in customer.addresses -%}
+        <div class="surface addresses__card">
+          {%- if address == customer.default_address -%}
+            <span class="chip addresses__default">{{ 'general.actions.confirm' | t }}</span>
+          {%- endif -%}
+
+          <address class="text-ui">{{ address | format_address }}</address>
+
+          <details class="addresses__edit">
+            <summary class="button button--secondary button--small">
+              {{ 'general.actions.edit' | t }}
+            </summary>
+            <div class="addresses__form">
+              {%- form 'customer_address', address -%}
+                <div class="field">
+                  <label class="field__label" for="address-first-{{ address.id }}">
+                    {{- 'customers.register.first_name' | t -}}
+                  </label>
+                  <input class="input" id="address-first-{{ address.id }}" type="text" name="address[first_name]" value="{{ address.first_name | escape }}" autocomplete="given-name">
+                </div>
+                <div class="field">
+                  <label class="field__label" for="address-last-{{ address.id }}">
+                    {{- 'customers.register.last_name' | t -}}
+                  </label>
+                  <input class="input" id="address-last-{{ address.id }}" type="text" name="address[last_name]" value="{{ address.last_name | escape }}" autocomplete="family-name">
+                </div>
+                <div class="field">
+                  <label class="field__label" for="address-street-{{ address.id }}">
+                    {{- 'store.address' | t -}}
+                  </label>
+                  <input class="input" id="address-street-{{ address.id }}" type="text" name="address[address1]" value="{{ address.address1 | escape }}" autocomplete="address-line1">
+                </div>
+                <div class="field">
+                  <label class="field__label" for="address-city-{{ address.id }}">Citta</label>
+                  <input class="input" id="address-city-{{ address.id }}" type="text" name="address[city]" value="{{ address.city | escape }}" autocomplete="address-level2">
+                </div>
+                <div class="field">
+                  <label class="field__label" for="address-zip-{{ address.id }}">CAP</label>
+                  <input class="input" id="address-zip-{{ address.id }}" type="text" name="address[zip]" value="{{ address.zip | escape }}" autocomplete="postal-code">
+                </div>
+                <div class="field">
+                  <label class="field__label" for="address-phone-{{ address.id }}">{{ 'forms.phone' | t }}</label>
+                  <input class="input" id="address-phone-{{ address.id }}" type="tel" name="address[phone]" value="{{ address.phone | escape }}" autocomplete="tel">
+                </div>
+
+                <div class="addresses__actions">
+                  <button class="button button--primary" type="submit">{{ 'general.actions.save' | t }}</button>
+                  <button
+                    class="button button--ghost"
+                    type="button"
+                    data-confirm-message="{{ 'general.actions.remove' | t }}?"
+                    onclick="if (confirm(this.dataset.confirmMessage)) { Shopify.postLink('{{ address.url }}', { parameters: { _method: 'delete' } }); }"
+                  >
+                    {{ 'general.actions.remove' | t }}
+                  </button>
+                </div>
+              {%- endform -%}
+            </div>
+          </details>
+        </div>
+      {%- endfor -%}
+    </div>
+
+    {%- if paginate.pages > 1 -%}
+      {% render 'pagination', paginate: paginate %}
+    {%- endif -%}
+  {%- endpaginate -%}
+
+  <details class="addresses__new">
+    <summary class="button button--primary">
+      {% render 'icon', name: 'plus', class: 'icon--sm' %}
+      {{ 'customers.account.addresses' | t }}
+    </summary>
+    <div class="surface addresses__form">
+      {%- form 'customer_address', customer.new_address -%}
+        <div class="field">
+          <label class="field__label" for="new-first">{{ 'customers.register.first_name' | t }}</label>
+          <input class="input" id="new-first" type="text" name="address[first_name]" autocomplete="given-name">
+        </div>
+        <div class="field">
+          <label class="field__label" for="new-last">{{ 'customers.register.last_name' | t }}</label>
+          <input class="input" id="new-last" type="text" name="address[last_name]" autocomplete="family-name">
+        </div>
+        <div class="field">
+          <label class="field__label" for="new-street">{{ 'store.address' | t }}</label>
+          <input class="input" id="new-street" type="text" name="address[address1]" autocomplete="address-line1">
+        </div>
+        <div class="field">
+          <label class="field__label" for="new-city">Citta</label>
+          <input class="input" id="new-city" type="text" name="address[city]" autocomplete="address-level2">
+        </div>
+        <div class="field">
+          <label class="field__label" for="new-zip">CAP</label>
+          <input class="input" id="new-zip" type="text" name="address[zip]" autocomplete="postal-code">
+        </div>
+        <div class="field">
+          <label class="field__label" for="new-phone">{{ 'forms.phone' | t }}</label>
+          <input class="input" id="new-phone" type="tel" name="address[phone]" autocomplete="tel">
+        </div>
+        <button class="button button--primary" type="submit">{{ 'general.actions.save' | t }}</button>
+      {%- endform -%}
+    </div>
+  </details>
+</div>
+
+{% stylesheet %}
+  .addresses {
+    padding-block: var(--space-6) var(--space-8);
+    display: grid;
+    gap: var(--space-5);
+    justify-items: start;
+  }
+
+  .addresses__header {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-3);
+    width: 100%;
+  }
+
+  .addresses__header h1 {
+    margin: 0;
+  }
+
+  .addresses__grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: var(--space-4);
+    width: 100%;
+  }
+
+  .addresses__card {
+    display: grid;
+    gap: var(--space-3);
+    padding: var(--space-4);
+    justify-items: start;
+  }
+
+  .addresses__card address {
+    font-style: normal;
+    color: var(--color-text-secondary);
+  }
+
+  /* Cobalt tint, not lime: an address is not a device. */
+  .addresses__default {
+    background-color: var(--color-primary-surface);
+    border-color: var(--color-border-strong);
+  }
+
+  .addresses__form {
+    display: grid;
+    gap: var(--space-3);
+    margin-block-start: var(--space-3);
+    padding: var(--space-4);
+  }
+
+  .addresses__actions {
+    display: flex;
+    gap: var(--space-2);
+  }
+
+  .addresses__new summary {
+    display: inline-flex;
+  }
+{% endstylesheet %}
+
+{% schema %}
+{
+  "name": "Indirizzi",
+  "settings": []
+}
+{% endschema %}

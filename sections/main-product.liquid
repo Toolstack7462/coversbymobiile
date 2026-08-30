@@ -1,0 +1,431 @@
+{% comment %}
+  Product page.
+
+  LAYOUT: gallery left, buy column right on desktop; stacked on mobile with a sticky purchase
+  bar. The buy column is block-driven so the merchant can reorder it in the theme editor.
+
+  THE ONE RULE THAT MATTERS HERE: the compatibility panel sits inside the buy column, adjacent
+  to the add-to-cart button — not in a tab, not below the fold. For a phone accessory, "does
+  this fit my phone?" is the question that blocks the purchase, and answering it late is the
+  single most common way this category loses a sale and gains a return.
+
+  Essential information (specifications, what is in the box, shipping, safety) is in accordions
+  on mobile but expanded by default on desktop, because hiding all detail behind clicks on a
+  large screen just makes people hunt.
+{% endcomment %}
+
+{%- liquid
+  assign current_variant = product.selected_or_first_available_variant
+-%}
+
+<div class="product page" data-product-id="{{ product.id }}">
+  {% render 'breadcrumbs' %}
+
+  <div class="product__layout">
+    <div class="product__media-column">
+      {% render 'product-media', product: product %}
+    </div>
+
+    <div class="product__info-column">
+      {%- for block in section.blocks -%}
+        {%- case block.type -%}
+
+          {%- when 'vendor' -%}
+            {%- if product.vendor != blank -%}
+              <p class="product__vendor eyebrow" {{ block.shopify_attributes }}>{{ product.vendor }}</p>
+            {%- endif -%}
+
+          {%- when 'title' -%}
+            <h1 class="product__title text-h1" {{ block.shopify_attributes }}>{{ product.title }}</h1>
+
+          {%- when 'rating' -%}
+            <div {{ block.shopify_attributes }}>
+              {% render 'rating', product: product %}
+            </div>
+
+          {%- when 'sku' -%}
+            {%- if current_variant.sku != blank -%}
+              <p class="product__sku text-caption text-secondary tabular" {{ block.shopify_attributes }}>
+                {{ 'products.sku' | t }}: <span data-variant-sku>{{ current_variant.sku }}</span>
+              </p>
+            {%- endif -%}
+
+          {%- when 'price' -%}
+            <div class="product__price" {{ block.shopify_attributes }} data-price-container>
+              {% render 'price', product: product, variant: current_variant, size: 'lg', show_prior: true %}
+              <p class="text-caption text-secondary">{{ 'price.shipping_at_checkout' | t }}</p>
+            </div>
+
+          {%- when 'compatibility' -%}
+            <div class="product__compat" {{ block.shopify_attributes }}>
+              {% render 'compat-badge', product: product, variant: 'panel', show_notes: true %}
+            </div>
+
+          {%- when 'variant_picker' -%}
+            {%- unless product.has_only_default_variant -%}
+              <div {{ block.shopify_attributes }}>
+                {% render 'variant-picker', product: product %}
+              </div>
+            {%- endunless -%}
+
+          {%- when 'stock' -%}
+            <div {{ block.shopify_attributes }} data-stock-container>
+              {% render 'stock-status', product: product, variant: current_variant %}
+            </div>
+
+          {%- when 'pickup' -%}
+            <div {{ block.shopify_attributes }} data-pickup-container>
+              {% render 'pickup-status', variant: current_variant %}
+            </div>
+
+          {%- when 'buy_buttons' -%}
+            <div class="product__buy" {{ block.shopify_attributes }}>
+              {%- form 'product', product, id: 'product-form', class: 'product__form', data-product-form: '', data-product-title: product.title -%}
+                <input type="hidden" name="id" value="{{ current_variant.id }}" data-variant-id>
+
+                <div class="product__buy-row">
+                  <div class="qty">
+                    <label class="visually-hidden" for="product-quantity">{{ 'products.quantity' | t }}</label>
+                    <button class="qty__button" type="button" data-pdp-qty-down>
+                      {% render 'icon', name: 'minus', class: 'icon--sm' %}
+                      <span class="visually-hidden">{{ 'products.decrease_quantity' | t }}</span>
+                    </button>
+                    <input
+                      class="qty__input tabular"
+                      id="product-quantity"
+                      type="number"
+                      name="quantity"
+                      value="1"
+                      min="1"
+                      {% if current_variant.inventory_management != blank and current_variant.inventory_policy == 'deny' %}
+                        max="{{ current_variant.inventory_quantity }}"
+                      {% endif %}
+                      inputmode="numeric"
+                      data-pdp-qty
+                    >
+                    <button class="qty__button" type="button" data-pdp-qty-up>
+                      {% render 'icon', name: 'plus', class: 'icon--sm' %}
+                      <span class="visually-hidden">{{ 'products.increase_quantity' | t }}</span>
+                    </button>
+                  </div>
+
+                  <button
+                    class="button button--primary product__add"
+                    type="submit"
+                    {% unless current_variant.available %}disabled{% endunless %}
+                    data-add-button
+                  >
+                    {%- if current_variant.available -%}
+                      {{ 'products.add_to_cart' | t }}
+                    {%- else -%}
+                      {{ 'products.sold_out' | t }}
+                    {%- endif -%}
+                  </button>
+                </div>
+
+                {%- if block.settings.show_dynamic_checkout -%}
+                  {{ form | payment_button }}
+                {%- endif -%}
+              {%- endform -%}
+            </div>
+
+          {%- when 'text' -%}
+            {%- if block.settings.text != blank -%}
+              <div class="product__text text-ui" {{ block.shopify_attributes }}>
+                {{ block.settings.text }}
+              </div>
+            {%- endif -%}
+
+          {%- when 'service_summary' -%}
+            <ul class="product__services" role="list" {{ block.shopify_attributes }}>
+              {%- if block.settings.shipping_text != blank -%}
+                <li>
+                  {% render 'icon', name: 'truck', class: 'icon--sm' %}
+                  <span class="text-ui">{{ block.settings.shipping_text }}</span>
+                </li>
+              {%- endif -%}
+              {%- if block.settings.returns_text != blank -%}
+                <li>
+                  {% render 'icon', name: 'refresh', class: 'icon--sm' %}
+                  <span class="text-ui">{{ block.settings.returns_text }}</span>
+                </li>
+              {%- endif -%}
+              {%- if settings.store_name != blank -%}
+                <li>
+                  {% render 'icon', name: 'store', class: 'icon--sm' %}
+                  <span class="text-ui">{{ 'cart.fulfilment_note' | t }}</span>
+                </li>
+              {%- endif -%}
+            </ul>
+
+          {%- when 'whatsapp' -%}
+            {%- if settings.business_whatsapp != blank -%}
+              <a
+                class="button button--secondary button--full"
+                href="https://wa.me/{{ settings.business_whatsapp }}?text={{ product.title | url_encode }}"
+                rel="noopener"
+                target="_blank"
+                {{ block.shopify_attributes }}
+              >
+                {% render 'icon', name: 'whatsapp', class: 'icon--sm' %}
+                {{ 'store.contact_whatsapp' | t }}
+                <span class="visually-hidden">({{ 'general.accessibility.new_window' | t }})</span>
+              </a>
+            {%- endif -%}
+
+          {%- when '@app' -%}
+            {%- render block -%}
+
+        {%- endcase -%}
+      {%- endfor -%}
+    </div>
+  </div>
+
+  {%- comment -%} Detail sections below the fold. {%- endcomment -%}
+  <div class="product__details">
+    {%- if product.description != blank -%}
+      <details class="accordion" open>
+        <summary class="accordion__summary">
+          <span class="text-h3">{{ 'products.description' | t }}</span>
+          {% render 'icon', name: 'chevron-down', class: 'accordion__chevron' %}
+        </summary>
+        <div class="accordion__body rte text-measure">{{ product.description }}</div>
+      </details>
+    {%- endif -%}
+
+    {% render 'product-specs', product: product %}
+
+    {%- if product.metafields.custom.in_the_box.value != blank -%}
+      <details class="accordion">
+        <summary class="accordion__summary">
+          <span class="text-h3">{{ 'products.in_the_box' | t }}</span>
+          {% render 'icon', name: 'chevron-down', class: 'accordion__chevron' %}
+        </summary>
+        <div class="accordion__body rte text-measure">
+          {{ product.metafields.custom.in_the_box.value }}
+        </div>
+      </details>
+    {%- endif -%}
+
+    {%- for block in section.blocks -%}
+      {%- if block.type == 'accordion' and block.settings.content != blank -%}
+        <details class="accordion" {{ block.shopify_attributes }}>
+          <summary class="accordion__summary">
+            <span class="text-h3">{{ block.settings.heading }}</span>
+            {% render 'icon', name: 'chevron-down', class: 'accordion__chevron' %}
+          </summary>
+          <div class="accordion__body rte text-measure">{{ block.settings.content }}</div>
+        </details>
+      {%- endif -%}
+    {%- endfor -%}
+
+    {% render 'product-safety', product: product %}
+  </div>
+</div>
+
+{%- comment -%}
+  Sticky purchase bar on mobile. Appears only once the main button has scrolled away, and is
+  offset so it can never obscure a focused element.
+{%- endcomment -%}
+<sticky-buy class="stickybuy" hidden>
+  <div class="stickybuy__inner">
+    <div class="stickybuy__info">
+      <span class="stickybuy__title text-caption">{{ product.title }}</span>
+      <span class="stickybuy__price tabular" data-sticky-price>{{ current_variant.price | money }}</span>
+    </div>
+    <button class="button button--primary" type="submit" form="product-form" data-sticky-add>
+      {{ 'products.add_to_cart' | t }}
+    </button>
+  </div>
+</sticky-buy>
+
+<script type="module" src="{{ 'product.js' | asset_url }}"></script>
+
+{% stylesheet %}
+  .product {
+    padding-block-end: var(--space-8);
+  }
+
+  .product__layout {
+    display: grid;
+    gap: var(--space-6);
+  }
+
+  .product__info-column {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-4);
+  }
+
+  .product__vendor {
+    margin: 0;
+  }
+
+  .product__title {
+    margin: 0;
+  }
+
+  .product__sku,
+  .product__price p {
+    margin: 0;
+  }
+
+  .product__buy-row {
+    display: flex;
+    gap: var(--space-2);
+  }
+
+  .product__add {
+    flex: 1;
+  }
+
+  .product__services {
+    list-style: none;
+    display: grid;
+    gap: var(--space-2);
+    padding: var(--space-4);
+    border: var(--border-width) solid var(--color-border);
+    border-radius: var(--radius-card);
+  }
+
+  .product__services li {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+    color: var(--color-text-secondary);
+  }
+
+  /* The only local accordion refinement. Everything else about .accordion and .rte is
+     canonical in critical.css, because both are used by several templates. */
+  .product__details .accordion__summary .text-h3 {
+    font-size: var(--text-h3);
+  }
+
+  .product__details {
+    margin-block-start: var(--space-8);
+    border-block-start: var(--border-width) solid var(--color-border);
+  }
+
+  /* ── Sticky purchase bar ─────────────────────────────────────────────── */
+
+  .stickybuy {
+    position: fixed;
+    inset-block-end: 0;
+    inset-inline: 0;
+    z-index: var(--z-mobile-nav);
+    background-color: var(--color-surface);
+    border-block-start: var(--border-width) solid var(--color-border);
+    padding: var(--space-3) var(--gutter);
+    padding-block-end: calc(var(--space-3) + env(safe-area-inset-bottom));
+    box-shadow: var(--shadow-menu);
+  }
+
+  .stickybuy__inner {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+    max-width: var(--page-width);
+    margin-inline: auto;
+  }
+
+  .stickybuy__info {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    flex: 1;
+  }
+
+  .stickybuy__title {
+    color: var(--color-text-secondary);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .stickybuy__price {
+    font-weight: var(--weight-bold);
+  }
+
+  @media (min-width: 990px) {
+    .product__layout {
+      grid-template-columns: minmax(0, 1.1fr) minmax(0, 0.9fr);
+      gap: var(--space-7);
+      align-items: start;
+    }
+
+    .product__info-column {
+      position: sticky;
+      inset-block-start: calc(var(--header-height) + var(--space-4));
+    }
+
+    .stickybuy {
+      display: none;
+    }
+  }
+{% endstylesheet %}
+
+{% schema %}
+{
+  "name": "t:names.main_product",
+  "settings": [],
+  "blocks": [
+    { "type": "@app" },
+    { "type": "vendor", "name": "Marca", "limit": 1, "settings": [] },
+    { "type": "title", "name": "Titolo", "limit": 1, "settings": [] },
+    { "type": "rating", "name": "Valutazione", "limit": 1, "settings": [] },
+    { "type": "sku", "name": "SKU", "limit": 1, "settings": [] },
+    { "type": "price", "name": "Prezzo", "limit": 1, "settings": [] },
+    {
+      "type": "compatibility",
+      "name": "Compatibilita",
+      "limit": 1,
+      "settings": [
+        {
+          "type": "paragraph",
+          "content": "Mostra la compatibilita con il dispositivo selezionato dal cliente. Tienilo vicino al pulsante di acquisto: e la domanda che blocca l'acquisto."
+        }
+      ]
+    },
+    { "type": "variant_picker", "name": "Opzioni", "limit": 1, "settings": [] },
+    { "type": "stock", "name": "Disponibilita", "limit": 1, "settings": [] },
+    {
+      "type": "pickup",
+      "name": "Ritiro in negozio",
+      "limit": 1,
+      "settings": [{ "type": "paragraph", "content": "t:info.pickup_from_shopify" }]
+    },
+    {
+      "type": "buy_buttons",
+      "name": "Pulsanti di acquisto",
+      "limit": 1,
+      "settings": [
+        {
+          "type": "checkbox",
+          "id": "show_dynamic_checkout",
+          "label": "Mostra i pulsanti di pagamento rapido",
+          "default": true
+        }
+      ]
+    },
+    {
+      "type": "service_summary",
+      "name": "Spedizione e resi",
+      "limit": 1,
+      "settings": [
+        { "type": "text", "id": "shipping_text", "label": "Testo spedizione", "info": "t:info.no_fake_data" },
+        { "type": "text", "id": "returns_text", "label": "Testo resi", "info": "t:info.no_fake_data" }
+      ]
+    },
+    { "type": "text", "name": "Testo", "settings": [{ "type": "richtext", "id": "text", "label": "t:labels.text" }] },
+    { "type": "whatsapp", "name": "Assistenza WhatsApp", "limit": 1, "settings": [] },
+    {
+      "type": "accordion",
+      "name": "Sezione a fisarmonica",
+      "settings": [
+        { "type": "text", "id": "heading", "label": "t:labels.heading" },
+        { "type": "richtext", "id": "content", "label": "t:labels.body" }
+      ]
+    }
+  ]
+}
+{% endschema %}

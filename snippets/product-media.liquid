@@ -1,0 +1,206 @@
+{% doc %}
+  Product media gallery.
+
+  Desktop: a stacked column of images with a thumbnail rail — no carousel. Scrolling beats
+  clicking through a slider when a customer wants to compare angles, and it removes an entire
+  class of accessibility problems.
+
+  Mobile: a horizontal scroll-snap track with real thumbnail buttons. Native scrolling, so it is
+  swipeable, keyboard reachable and needs no slider library.
+
+  The first image is the LCP element on this template: eager, high priority, everything else
+  lazy. Every image declares width and height so the gallery reserves its space before the
+  images arrive.
+
+  @param {object} product - The product.
+
+  @example
+  {% render 'product-media', product: product %}
+{% enddoc %}
+
+{%- if product.media.size > 0 -%}
+  <media-gallery class="gallery" data-gallery>
+    <div class="gallery__viewport" role="group" aria-label="{{ 'products.gallery' | t: title: product.title }}">
+      {%- for media in product.media -%}
+        <figure
+          class="gallery__item"
+          id="media-{{ media.id }}"
+          data-media-id="{{ media.id }}"
+        >
+          {%- case media.media_type -%}
+            {%- when 'image' -%}
+              <div class="media">
+                <img
+                  src="{{ media | image_url: width: 1200 }}"
+                  srcset="
+                    {{ media | image_url: width: 600 }} 600w,
+                    {{ media | image_url: width: 900 }} 900w,
+                    {{ media | image_url: width: 1200 }} 1200w,
+                    {{ media | image_url: width: 1600 }} 1600w
+                  "
+                  sizes="(min-width: 990px) 55vw, 100vw"
+                  alt="{{ media.alt | default: product.title | escape }}"
+                  width="{{ media.preview_image.width }}"
+                  height="{{ media.preview_image.height }}"
+                  {% if forloop.first %}
+                    loading="eager"
+                    fetchpriority="high"
+                  {% else %}
+                    loading="lazy"
+                  {% endif %}
+                >
+              </div>
+
+            {%- when 'video' -%}
+              {%- comment -%}
+                Videos never autoplay. `image_size` gives the poster frame so the box is
+                reserved and nothing shifts when the player loads.
+              {%- endcomment -%}
+              <div class="media media--cover">
+                {{ media | video_tag: controls: true, image_size: '1200x' }}
+              </div>
+
+            {%- when 'external_video' -%}
+              <div class="media media--cover">
+                {{ media | external_video_tag: loading: 'lazy' }}
+              </div>
+
+            {%- when 'model' -%}
+              <div class="media media--cover">
+                {{ media | model_viewer_tag }}
+              </div>
+          {%- endcase -%}
+
+          {%- if media.alt != blank -%}
+            <figcaption class="visually-hidden">{{ media.alt }}</figcaption>
+          {%- endif -%}
+        </figure>
+      {%- endfor -%}
+    </div>
+
+    {%- if product.media.size > 1 -%}
+      <div class="gallery__thumbs" role="group" aria-label="{{ 'products.gallery' | t: title: product.title }}">
+        {%- for media in product.media -%}
+          <button
+            class="gallery__thumb{% if forloop.first %} is-active{% endif %}"
+            type="button"
+            data-thumb
+            data-media-id="{{ media.id }}"
+            aria-current="{% if forloop.first %}true{% else %}false{% endif %}"
+          >
+            <img
+              src="{{ media.preview_image | image_url: width: 160 }}"
+              alt=""
+              width="80"
+              height="80"
+              loading="lazy"
+            >
+            <span class="visually-hidden">
+              {{- 'products.gallery_thumbnail' | t: number: forloop.index -}}
+            </span>
+          </button>
+        {%- endfor -%}
+      </div>
+    {%- endif -%}
+  </media-gallery>
+{%- else -%}
+  {%- comment -%} A product with no media must still render a sane, sized box. {%- endcomment -%}
+  <div class="media media--empty">
+    {% render 'icon', name: 'package', class: 'icon--xl' %}
+    <span class="visually-hidden">{{ 'general.states.no_image' | t }}</span>
+  </div>
+{%- endif -%}
+
+{% stylesheet %}
+  .gallery {
+    display: grid;
+    gap: var(--space-3);
+  }
+
+  .gallery__viewport {
+    display: flex;
+    gap: var(--space-2);
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+    overscroll-behavior-x: contain;
+    scrollbar-width: none;
+  }
+
+  .gallery__viewport::-webkit-scrollbar {
+    display: none;
+  }
+
+  .gallery__item {
+    flex: 0 0 100%;
+    scroll-snap-align: center;
+    margin: 0;
+    border: var(--border-width) solid var(--color-border);
+    border-radius: var(--radius-card);
+    overflow: hidden;
+    background-color: var(--color-surface);
+  }
+
+  .gallery__thumbs {
+    display: flex;
+    gap: var(--space-2);
+    overflow-x: auto;
+    overscroll-behavior-x: contain;
+    scrollbar-width: none;
+  }
+
+  .gallery__thumbs::-webkit-scrollbar {
+    display: none;
+  }
+
+  .gallery__thumb {
+    flex: none;
+    width: 64px;
+    height: 64px;
+    padding: var(--space-1);
+    border: var(--border-width) solid var(--color-border);
+    border-radius: var(--radius-control);
+    background-color: var(--color-surface);
+    transition: border-color var(--duration-fast) var(--ease);
+  }
+
+  .gallery__thumb img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+  }
+
+  .gallery__thumb.is-active {
+    border-color: var(--color-ink);
+    border-width: 2px;
+  }
+
+  @media (min-width: 990px) {
+    /* Desktop: a stacked column, not a carousel. Thumbnails become jump links. */
+    .gallery {
+      grid-template-columns: 72px minmax(0, 1fr);
+      align-items: start;
+      gap: var(--space-3);
+    }
+
+    .gallery__thumbs {
+      order: -1;
+      flex-direction: column;
+      position: sticky;
+      inset-block-start: calc(var(--header-height) + var(--space-4));
+      max-height: calc(100vh - var(--header-height) - var(--space-8));
+      overflow-y: auto;
+    }
+
+    .gallery__viewport {
+      flex-direction: column;
+      overflow: visible;
+      scroll-snap-type: none;
+      gap: var(--space-3);
+    }
+
+    .gallery__item {
+      flex: none;
+      scroll-margin-block-start: calc(var(--header-height) + var(--space-4));
+    }
+  }
+{% endstylesheet %}

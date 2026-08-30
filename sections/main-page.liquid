@@ -1,0 +1,81 @@
+{% comment %}
+  Generic content page. Used for policies, guides, contact copy and anything editorial.
+
+  Legal pages render through this template. The theme provides the surface; the words are the
+  merchant's and must be reviewed by a qualified Italian professional before launch — see
+  docs/legal-review-checklist.md.
+{% endcomment %}
+
+<div class="contentpage page">
+  {% render 'breadcrumbs' %}
+
+  <article class="contentpage__article">
+    <header class="contentpage__header">
+      <h1 class="text-h1">{{ page.title }}</h1>
+    </header>
+
+    {%- if page.content != blank -%}
+      <div class="rte contentpage__body">{{ page.content }}</div>
+    {%- endif -%}
+
+    {%- if section.settings.show_updated and page.metafields.custom.last_reviewed.value != blank -%}
+      <p class="contentpage__updated text-caption text-secondary">
+        {{ 'blog.published_on' | t: date: page.metafields.custom.last_reviewed.value }}
+      </p>
+    {%- endif -%}
+  </article>
+</div>
+
+{% stylesheet %}
+  .contentpage {
+    padding-block: var(--space-5) var(--space-8);
+  }
+
+  .contentpage__article {
+    max-width: 72ch;
+  }
+
+  .contentpage__header {
+    margin-block-end: var(--space-5);
+  }
+
+  .contentpage__body {
+    font-size: var(--text-body);
+    line-height: 1.7;
+  }
+
+  .contentpage__body h2 {
+    font-family: var(--font-heading);
+    font-size: var(--text-h3);
+    line-height: var(--text-h3-lh);
+    margin-block-start: var(--space-6);
+  }
+
+  .contentpage__body h3 {
+    font-family: var(--font-heading);
+    font-size: var(--text-body);
+    font-weight: var(--weight-heading);
+    margin-block-start: var(--space-5);
+  }
+
+  .contentpage__updated {
+    margin-block-start: var(--space-6);
+    padding-block-start: var(--space-3);
+    border-block-start: var(--border-width) solid var(--color-border);
+  }
+{% endstylesheet %}
+
+{% schema %}
+{
+  "name": "t:names.main_page",
+  "settings": [
+    {
+      "type": "checkbox",
+      "id": "show_updated",
+      "label": "Mostra la data di ultima revisione",
+      "default": false,
+      "info": "Utile sulle pagine legali. Richiede il metacampo custom.last_reviewed sulla pagina."
+    }
+  ]
+}
+{% endschema %}

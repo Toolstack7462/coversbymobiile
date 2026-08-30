@@ -1,0 +1,46 @@
+{% comment %}
+  Account activation.
+{% endcomment %}
+
+<div class="account page">
+  <div class="account__panel surface">
+    <div class="account__form-block">
+      <h1 class="text-h2">{{ 'customers.register.title' | t }}</h1>
+
+      {%- form 'activate_customer_password' -%}
+        {%- if form.errors -%}
+          <div class="account__message account__message--error" role="alert">
+            <p class="text-ui">{{ 'forms.error_generic' | t }}</p>
+          </div>
+        {%- endif -%}
+
+        <div class="field">
+          <label class="field__label" for="activate-password">{{ 'customers.login.password' | t }}</label>
+          <input class="input" id="activate-password" type="password" name="customer[password]" autocomplete="new-password" required>
+        </div>
+
+        <div class="field">
+          <label class="field__label" for="activate-password-confirm">
+            {{- 'customers.login.password' | t -}}
+          </label>
+          <input class="input" id="activate-password-confirm" type="password" name="customer[password_confirmation]" autocomplete="new-password" required>
+        </div>
+
+        <button class="button button--primary button--full" type="submit">
+          {{ 'customers.register.submit' | t }}
+        </button>
+
+        <button class="button button--ghost button--full" type="submit" name="decline">
+          {{ 'general.actions.cancel' | t }}
+        </button>
+      {%- endform -%}
+    </div>
+  </div>
+</div>
+
+{% schema %}
+{
+  "name": "Attiva account",
+  "settings": []
+}
+{% endschema %}

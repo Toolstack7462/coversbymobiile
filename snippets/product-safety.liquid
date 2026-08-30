@@ -1,0 +1,221 @@
+{% doc %}
+  Product safety information (EU GPSR — Regulation (EU) 2023/988).
+
+  From 13 December 2024 the GPSR requires products offered to EU consumers to display the
+  manufacturer's identity and contact details, the EU responsible person where the manufacturer
+  is outside the EU, and any warnings or safety information. This snippet provides the surface
+  for that data.
+
+  IT RENDERS ONLY WHAT THE MERCHANT HAS ENTERED. Nothing is defaulted, inferred or invented:
+  - No CE mark or certification claim is displayed unless the certification field is populated.
+  - No safety warning is generated. A fabricated safety claim is far worse than a missing one.
+  - If nothing is filled in, the whole block is absent rather than showing empty headings.
+
+  Compliance responsibility rests with the merchant. See `docs/legal-review-checklist.md` — this
+  is a data surface, not legal advice, and the field set must be reviewed by a qualified adviser.
+
+  @param {object} product - The product.
+
+  @example
+  {% render 'product-safety', product: product %}
+{% enddoc %}
+
+{%- liquid
+  assign s = product.metafields.custom
+
+  assign has_safety = false
+  if s.manufacturer_name.value != blank or s.eu_responsible_person.value != blank
+    assign has_safety = true
+  endif
+  if s.safety_warnings.value != blank or s.usage_limitations.value != blank
+    assign has_safety = true
+  endif
+  if s.manual_url.value != blank or s.safety_document_url.value != blank
+    assign has_safety = true
+  endif
+  if s.certification.value != blank or s.battery_notes.value != blank or s.disposal_notes.value != blank
+    assign has_safety = true
+  endif
+-%}
+
+{%- if has_safety -%}
+  <details class="accordion safety">
+    <summary class="accordion__summary">
+      <span class="text-h3">{{ 'products.safety' | t }}</span>
+      {% render 'icon', name: 'chevron-down', class: 'accordion__chevron' %}
+    </summary>
+
+    <div class="accordion__body">
+      {%- if s.safety_warnings.value != blank -%}
+        <div class="safety__warning" role="note">
+          {% render 'icon', name: 'alert-triangle', class: 'icon--sm' %}
+          <div>
+            <p class="safety__warning-title text-ui">{{ 'products.safety' | t }}</p>
+            <div class="rte text-ui">{{ s.safety_warnings.value }}</div>
+          </div>
+        </div>
+      {%- endif -%}
+
+      <dl class="safety__list">
+        {%- if s.manufacturer_name.value != blank -%}
+          <div class="safety__item">
+            <dt class="text-ui text-secondary">{{ 'safety.manufacturer' | t }}</dt>
+            <dd class="text-ui">
+              {{ s.manufacturer_name.value }}
+              {%- if s.manufacturer_address.value != blank -%}
+                <br>{{ s.manufacturer_address.value }}
+              {%- endif -%}
+              {%- if s.manufacturer_contact.value != blank -%}
+                <br>{{ s.manufacturer_contact.value }}
+              {%- endif -%}
+            </dd>
+          </div>
+        {%- endif -%}
+
+        {%- if s.eu_responsible_person.value != blank -%}
+          <div class="safety__item">
+            <dt class="text-ui text-secondary">{{ 'safety.eu_person' | t }}</dt>
+            <dd class="text-ui">
+              {{ s.eu_responsible_person.value }}
+              {%- if s.eu_responsible_address.value != blank -%}
+                <br>{{ s.eu_responsible_address.value }}
+              {%- endif -%}
+              {%- if s.eu_responsible_contact.value != blank -%}
+                <br>{{ s.eu_responsible_contact.value }}
+              {%- endif -%}
+            </dd>
+          </div>
+        {%- endif -%}
+
+        {%- if s.product_identifier.value != blank -%}
+          <div class="safety__item">
+            <dt class="text-ui text-secondary">{{ 'safety.identifier' | t }}</dt>
+            <dd class="text-ui tabular">{{ s.product_identifier.value }}</dd>
+          </div>
+        {%- endif -%}
+
+        {%- if s.usage_limitations.value != blank -%}
+          <div class="safety__item">
+            <dt class="text-ui text-secondary">{{ 'safety.limitations' | t }}</dt>
+            <dd class="text-ui">{{ s.usage_limitations.value }}</dd>
+          </div>
+        {%- endif -%}
+
+        {%- comment -%}
+          Certification is displayed as the merchant's own recorded text. The theme never draws
+          a CE badge: a compliance mark rendered from an unverified boolean is a false claim.
+        {%- endcomment -%}
+        {%- if s.certification.value != blank -%}
+          <div class="safety__item">
+            <dt class="text-ui text-secondary">{{ 'safety.certifications' | t }}</dt>
+            <dd class="text-ui">{{ s.certification.value }}</dd>
+          </div>
+        {%- endif -%}
+
+        {%- if s.battery_notes.value != blank -%}
+          <div class="safety__item">
+            <dt class="text-ui text-secondary">{{ 'safety.battery' | t }}</dt>
+            <dd class="text-ui">{{ s.battery_notes.value }}</dd>
+          </div>
+        {%- endif -%}
+
+        {%- if s.disposal_notes.value != blank -%}
+          <div class="safety__item">
+            <dt class="text-ui text-secondary">{{ 'safety.disposal' | t }}</dt>
+            <dd class="text-ui">{{ s.disposal_notes.value }}</dd>
+          </div>
+        {%- endif -%}
+      </dl>
+
+      {%- if s.manual_url.value != blank or s.safety_document_url.value != blank -%}
+        <ul class="safety__docs" role="list">
+          {%- if s.manual_url.value != blank -%}
+            <li>
+              <a class="safety__doc text-ui" href="{{ s.manual_url.value }}" rel="noopener" target="_blank">
+                {% render 'icon', name: 'external', class: 'icon--sm' %}
+                {{ 'products.manuals' | t }}
+                <span class="visually-hidden">({{ 'general.accessibility.new_window' | t }})</span>
+              </a>
+            </li>
+          {%- endif -%}
+          {%- if s.safety_document_url.value != blank -%}
+            <li>
+              <a class="safety__doc text-ui" href="{{ s.safety_document_url.value }}" rel="noopener" target="_blank">
+                {% render 'icon', name: 'shield', class: 'icon--sm' %}
+                {{ 'products.safety' | t }}
+                <span class="visually-hidden">({{ 'general.accessibility.new_window' | t }})</span>
+              </a>
+            </li>
+          {%- endif -%}
+        </ul>
+      {%- endif -%}
+    </div>
+  </details>
+{%- endif -%}
+
+{% stylesheet %}
+  .safety__warning {
+    display: flex;
+    align-items: flex-start;
+    gap: var(--space-3);
+    padding: var(--space-3);
+    margin-block-end: var(--space-4);
+    background-color: var(--color-warning-surface);
+    border: var(--border-width) solid var(--color-warning);
+    border-radius: var(--radius-control);
+    color: var(--color-warning-text);
+  }
+
+  .safety__warning .icon {
+    flex: none;
+    margin-block-start: 2px;
+  }
+
+  .safety__warning-title {
+    margin: 0 0 var(--space-1);
+    font-weight: var(--weight-semibold);
+  }
+
+  .safety__list {
+    display: grid;
+    gap: var(--space-3);
+    margin: 0;
+  }
+
+  .safety__item {
+    display: grid;
+    gap: 2px;
+  }
+
+  .safety__item dt {
+    font-weight: var(--weight-medium);
+  }
+
+  .safety__item dd {
+    margin: 0;
+  }
+
+  .safety__docs {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-4);
+    margin-block-start: var(--space-4);
+    list-style: none;
+  }
+
+  .safety__doc {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-2);
+    min-height: var(--target-min);
+    color: var(--color-primary);
+    font-weight: var(--weight-medium);
+  }
+
+  @media (min-width: 750px) {
+    .safety__item {
+      grid-template-columns: 220px minmax(0, 1fr);
+      gap: var(--space-4);
+    }
+  }
+{% endstylesheet %}

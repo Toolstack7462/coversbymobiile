@@ -1,0 +1,18 @@
+{
+  "sections": {
+    "finder": {
+      "type": "device-finder",
+      "settings": {
+        "compact": false
+      }
+    },
+    "main": {
+      "type": "main-page",
+      "settings": {}
+    }
+  },
+  "order": [
+    "finder",
+    "main"
+  ]
+}

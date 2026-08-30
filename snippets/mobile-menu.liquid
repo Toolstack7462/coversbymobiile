@@ -1,0 +1,220 @@
+{% doc %}
+  The mobile navigation drawer.
+
+  Navigation is never hidden behind a gesture or an unlabelled icon: the trigger is a labelled
+  button, the drawer is a real element in the DOM, and every level is reachable. Sub-menus use
+  native <details> so they expand without JavaScript and announce their state correctly.
+
+  Rendered hidden. `assets/navigation.js` handles opening, the focus trap, Escape and returning
+  focus to the trigger.
+
+  @param {object} menu - The linklist to render.
+  @param {string} id - Element id referenced by the toggle's aria-controls.
+  @param {string} [device_url] - Destination for the device finder call to action.
+
+  @example
+  {% render 'mobile-menu', menu: linklists.main-menu, id: 'mobile-menu' %}
+{% enddoc %}
+
+<mobile-menu class="mmenu" id="{{ id }}" hidden>
+  <div class="mmenu__panel" data-menu-panel role="dialog" aria-modal="true" aria-label="{{ 'header.main_navigation' | t }}">
+    <div class="mmenu__header">
+      <span class="mmenu__title text-h3">{{ 'header.menu' | t }}</span>
+      <button class="icon-button" type="button" data-menu-close>
+        {% render 'icon', name: 'close', class: 'icon--lg' %}
+        <span class="visually-hidden">{{ 'general.accessibility.close_menu' | t }}</span>
+      </button>
+    </div>
+
+    <div class="mmenu__body">
+      {%- comment -%}
+        Device finder sits at the very top. On mobile this is the fastest route to a relevant
+        product, and burying it under the category tree would waste it.
+      {%- endcomment -%}
+      <a class="mmenu__device surface--device" href="{{ device_url | default: '/pages/trova-dispositivo' }}">
+        {% render 'icon', name: 'device' %}
+        <span>
+          <strong class="text-ui">{{ 'device.open_finder' | t }}</strong>
+          <span class="text-caption text-secondary">{{ 'device.finder_subtitle' | t }}</span>
+        </span>
+        {% render 'icon', name: 'chevron-right', class: 'icon--sm' %}
+      </a>
+
+      {%- if menu != blank -%}
+        <ul class="mmenu__list" role="list">
+          {%- for link in menu.links -%}
+            <li>
+              {%- if link.links.size > 0 -%}
+                <details class="mmenu__group">
+                  <summary class="mmenu__link">
+                    {{ link.title }}
+                    {% render 'icon', name: 'chevron-down', class: 'icon--sm' %}
+                  </summary>
+                  <ul class="mmenu__sublist" role="list">
+                    {%- for child in link.links -%}
+                      <li>
+                        {%- if child.links.size > 0 -%}
+                          <details class="mmenu__group">
+                            <summary class="mmenu__link mmenu__link--sub">
+                              {{ child.title }}
+                              {% render 'icon', name: 'chevron-down', class: 'icon--sm' %}
+                            </summary>
+                            <ul class="mmenu__sublist" role="list">
+                              {%- for grandchild in child.links -%}
+                                <li>
+                                  <a class="mmenu__link mmenu__link--sub" href="{{ grandchild.url }}">
+                                    {{- grandchild.title -}}
+                                  </a>
+                                </li>
+                              {%- endfor -%}
+                            </ul>
+                          </details>
+                        {%- else -%}
+                          <a class="mmenu__link mmenu__link--sub" href="{{ child.url }}">{{ child.title }}</a>
+                        {%- endif -%}
+                      </li>
+                    {%- endfor -%}
+                  </ul>
+                </details>
+              {%- else -%}
+                <a class="mmenu__link" href="{{ link.url }}">{{ link.title }}</a>
+              {%- endif -%}
+            </li>
+          {%- endfor -%}
+        </ul>
+      {%- endif -%}
+
+      <div class="mmenu__utility">
+        {%- if settings.store_name != blank -%}
+          <a class="mmenu__link" href="{{ pages.negozio.url | default: '/pages/negozio' }}">
+            {% render 'icon', name: 'store', class: 'icon--sm' %}
+            {{ 'header.store' | t }}
+          </a>
+        {%- endif -%}
+
+        {%- if shop.customer_accounts_enabled -%}
+          <a class="mmenu__link" href="{{ routes.account_url }}">
+            {% render 'icon', name: 'account', class: 'icon--sm' %}
+            {{ 'header.account' | t }}
+          </a>
+        {%- endif -%}
+
+        {%- if settings.business_whatsapp != blank -%}
+          <a class="mmenu__link" href="https://wa.me/{{ settings.business_whatsapp }}" rel="noopener" target="_blank">
+            {% render 'icon', name: 'whatsapp', class: 'icon--sm' %}
+            {{ 'store.contact_whatsapp' | t }}
+          </a>
+        {%- endif -%}
+      </div>
+    </div>
+  </div>
+</mobile-menu>
+
+{% stylesheet %}
+  .mmenu {
+    position: fixed;
+    inset: 0;
+    z-index: var(--z-drawer);
+    background-color: rgb(11 18 32 / 0.4);
+  }
+
+  .mmenu__panel {
+    display: flex;
+    flex-direction: column;
+    width: min(92vw, 400px);
+    height: 100%;
+    background-color: var(--color-surface);
+    box-shadow: var(--shadow-drawer);
+    /* Respects the notch and the home indicator on iOS. */
+    padding-block-end: env(safe-area-inset-bottom);
+  }
+
+  .mmenu__header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-3);
+    padding: var(--space-3) var(--space-4);
+    border-block-end: var(--border-width) solid var(--color-border);
+  }
+
+  .mmenu__title {
+    font-family: var(--font-heading);
+  }
+
+  .mmenu__body {
+    flex: 1;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    padding: var(--space-4);
+  }
+
+  .mmenu__device {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+    padding: var(--space-3);
+    margin-block-end: var(--space-4);
+    background-color: var(--color-accent-surface);
+    border: var(--border-width) solid var(--color-border);
+    border-inline-start-width: 3px;
+    border-inline-start-color: var(--color-accent);
+    text-decoration: none;
+    color: var(--color-ink);
+  }
+
+  .mmenu__device span {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    flex: 1;
+  }
+
+  .mmenu__list,
+  .mmenu__sublist {
+    list-style: none;
+  }
+
+  .mmenu__link {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-3);
+    /* Comfortably above the 44px minimum: this is the primary mobile navigation. */
+    min-height: 52px;
+    padding-block: var(--space-2);
+    font-size: var(--text-body);
+    font-weight: var(--weight-medium);
+    color: var(--color-ink);
+    text-decoration: none;
+    border-block-end: var(--border-width) solid var(--color-border);
+  }
+
+  .mmenu__link--sub {
+    font-weight: var(--weight-regular);
+    color: var(--color-text-secondary);
+    padding-inline-start: var(--space-4);
+  }
+
+  .mmenu__group[open] > .mmenu__link .icon {
+    transform: rotate(180deg);
+  }
+
+  .mmenu__utility {
+    margin-block-start: var(--space-5);
+    padding-block-start: var(--space-4);
+    border-block-start: var(--border-width) solid var(--color-border);
+  }
+
+  .mmenu__utility .mmenu__link {
+    justify-content: flex-start;
+    border-block-end: 0;
+    min-height: var(--target-min);
+  }
+
+  @media (min-width: 990px) {
+    .mmenu {
+      display: none;
+    }
+  }
+{% endstylesheet %}

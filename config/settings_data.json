@@ -1,0 +1,33 @@
+/*
+ * ------------------------------------------------------------
+ * IMPORTANT: The contents of this file are auto-generated.
+ *
+ * This file may be updated by the Shopify admin theme editor
+ * or related systems. Please exercise caution as any changes
+ * made to this file may be overwritten.
+ * ------------------------------------------------------------
+ */
+{
+  "current": {
+    "font_self_hosted": true,
+    "page_width": 1440,
+    "sticky_header": true,
+    "enable_mobile_nav": true,
+    "enable_wishlist": true,
+    "enable_compare": true,
+    "enable_consent_banner": true,
+    "show_low_stock": false,
+    "low_stock_threshold": 3,
+    "show_inventory_quantity": false,
+    "show_free_shipping_bar": false,
+    "logo_width": 140,
+
+    "store_street": "Viale della Repubblica 8a, Centro Il Nuovo Borgo, negozio 6",
+    "store_postcode": "67039",
+    "store_city": "Sulmona",
+    "store_province": "AQ",
+    "store_latitude": "42.0614846",
+    "store_longitude": "13.9200965",
+    "store_directions_url": "https://www.google.com/maps/dir/?api=1&destination=42.0614846%2C13.9200965"
+  }
+}

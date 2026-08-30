@@ -1,0 +1,21 @@
+{
+  "type": "header",
+  "name": "t:names.header",
+  "sections": {
+    "utility-bar": {
+      "type": "utility-bar",
+      "blocks": {},
+      "block_order": [],
+      "settings": {}
+    },
+    "header": {
+      "type": "header",
+      "settings": {
+        "menu": "main-menu",
+        "device_finder_url": "/pages/trova-dispositivo",
+        "wishlist_url": "/pages/preferiti"
+      }
+    }
+  },
+  "order": ["utility-bar", "header"]
+}

@@ -1,0 +1,329 @@
+{% doc %}
+  The product card. Used in every grid: collections, search, recommendations, recently viewed.
+
+  Information hierarchy (fixed — do not reorder without a CRO reason):
+  image, badges, brand, title, COMPATIBILITY, rating, price, swatches, availability, actions.
+
+  Compatibility sits directly under the title because "does this fit my phone?" is this
+  customer's blocking question, ahead of price.
+
+  QUICK ADD RULE: a card only offers quick add when no meaningful choice remains (a single
+  variant). Anything with a real colour or length choice links to the product page instead.
+  Silently adding an arbitrary default variant causes returns and destroys trust.
+
+  @param {object} product - The product to render.
+  @param {boolean} [lcp] - Marks this card's image as the LCP candidate: eager, high priority.
+    Set on the FIRST card of the first grid only.
+  @param {boolean} [show_vendor] - Defaults to true.
+  @param {boolean} [show_rating] - Defaults to true (renders only with genuine review data).
+  @param {boolean} [show_swatches] - Defaults to true.
+  @param {boolean} [show_quick_add] - Defaults to true.
+  @param {boolean} [show_wishlist] - Defaults to the theme setting.
+  @param {string} [sizes] - Override the responsive `sizes` attribute.
+
+  @example
+  {% render 'product-card', product: product %}
+  {% render 'product-card', product: product, lcp: true %}
+{% enddoc %}
+
+{%- liquid
+  assign target = product.selected_or_first_available_variant
+  assign image = product.featured_media.preview_image
+  assign image_sizes = sizes | default: '(min-width: 1200px) 336px, (min-width: 750px) 30vw, 45vw'
+
+  # Quick add is only safe when there is genuinely nothing left to choose.
+  assign can_quick_add = false
+  if show_quick_add != false and product.variants.size == 1 and target.available
+    assign can_quick_add = true
+  endif
+
+  # NOTE: `false == blank` is true in Liquid, so a nil check cannot distinguish "not passed"
+  # from "explicitly false". Compare against false directly.
+  assign wishlist_enabled = settings.enable_wishlist
+  if show_wishlist == false
+    assign wishlist_enabled = false
+  endif
+-%}
+
+<div class="card" data-product-id="{{ product.id }}" data-product-handle="{{ product.handle }}">
+  <div class="card__media">
+    <a
+      class="card__media-link"
+      href="{{ product.url }}"
+      tabindex="-1"
+      aria-hidden="true"
+    >
+      {%- if image -%}
+        <div class="media">
+          <img
+            src="{{ image | image_url: width: 600 }}"
+            srcset="
+              {{ image | image_url: width: 300 }} 300w,
+              {{ image | image_url: width: 450 }} 450w,
+              {{ image | image_url: width: 600 }} 600w,
+              {{ image | image_url: width: 900 }} 900w
+            "
+            sizes="{{ image_sizes }}"
+            alt="{{ image.alt | default: product.title | escape }}"
+            width="{{ image.width }}"
+            height="{{ image.height }}"
+            {% if lcp %}
+              loading="eager"
+              fetchpriority="high"
+            {% else %}
+              loading="lazy"
+            {% endif %}
+            data-card-image
+          >
+        </div>
+      {%- else -%}
+        {%- comment -%} Missing image must degrade gracefully, never to a broken icon. {%- endcomment -%}
+        <div class="media media--empty">
+          {% render 'icon', name: 'package', class: 'icon--xl' %}
+          <span class="visually-hidden">{{ 'general.states.no_image' | t }}</span>
+        </div>
+      {%- endif -%}
+    </a>
+
+    <div class="card__media-overlay">
+      {% render 'product-badges', product: product %}
+    </div>
+
+    {%- if wishlist_enabled -%}
+      <wishlist-button
+        class="card__wishlist"
+        data-product-id="{{ product.id }}"
+        data-product-handle="{{ product.handle }}"
+        data-product-title="{{ product.title | escape }}"
+      >
+        <button
+          class="icon-button"
+          type="button"
+          aria-pressed="false"
+          data-wishlist-toggle
+        >
+          {% render 'icon', name: 'heart' %}
+          <span class="visually-hidden" data-wishlist-label>{{ 'products.add_to_wishlist' | t }}</span>
+        </button>
+      </wishlist-button>
+    {%- endif -%}
+  </div>
+
+  <div class="card__body">
+    {%- if show_vendor != false and product.vendor != blank -%}
+      <p class="card__vendor text-caption text-secondary">{{ product.vendor }}</p>
+    {%- endif -%}
+
+    <h3 class="card__title text-ui">
+      {%- comment -%}
+        The whole card is reachable through this one link. The media link above is
+        aria-hidden and untabbable so keyboard users get one stop per card, not three.
+      {%- endcomment -%}
+      <a class="card__link" href="{{ product.url }}">{{ product.title }}</a>
+    </h3>
+
+    {% render 'compat-badge', product: product %}
+
+    {%- if show_rating != false -%}
+      {% render 'rating', product: product, size: 'sm' %}
+    {%- endif -%}
+
+    {% render 'price', product: product, show_prior: false %}
+
+    {%- if show_swatches != false -%}
+      {% render 'product-swatches', product: product %}
+    {%- endif -%}
+
+    {% render 'stock-status', product: product, variant: target, compact: true %}
+
+    {%- if can_quick_add -%}
+      {%- form 'product', product, class: 'card__form', data-quick-add: '' -%}
+        <input type="hidden" name="id" value="{{ target.id }}">
+        <button class="button button--secondary button--small button--full" type="submit">
+          {% render 'icon', name: 'plus', class: 'icon--sm' %}
+          {{ 'products.quick_add' | t }}
+          <span class="visually-hidden">— {{ product.title }}</span>
+        </button>
+      {%- endform -%}
+    {%- elsif show_quick_add != false and product.available -%}
+      <a class="button button--secondary button--small button--full" href="{{ product.url }}">
+        {{ 'products.select_options' | t }}
+        <span class="visually-hidden">— {{ product.title }}</span>
+      </a>
+    {%- endif -%}
+
+    {%- comment -%}
+      Comparison is offered from the grid, which is where a customer actually shortlists. It is
+      a quiet text control rather than a third button: the card already carries enough weight,
+      and comparison is a secondary intent behind "does it fit" and "what does it cost".
+
+      The accessory type is passed through so compare.js can enforce the same-category rule.
+    {%- endcomment -%}
+    {%- if settings.enable_compare -%}
+      <compare-button
+        class="card__compare"
+        data-product-id="{{ product.id }}"
+        data-product-handle="{{ product.handle }}"
+        data-product-title="{{ product.title | escape }}"
+        data-product-category="{{ product.metafields.custom.accessory_type.value | escape }}"
+      >
+        <button class="card__compare-toggle text-caption" type="button" aria-pressed="false" data-compare-toggle>
+          {% render 'icon', name: 'compare', class: 'icon--sm' %}
+          {{ 'products.add_to_compare' | t }}
+          <span class="visually-hidden">— {{ product.title }}</span>
+        </button>
+      </compare-button>
+    {%- endif -%}
+  </div>
+</div>
+
+{% stylesheet %}
+  .card {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    background-color: var(--color-surface);
+    border: var(--border-width) solid var(--color-border);
+    border-radius: var(--radius-card);
+    overflow: hidden;
+    transition: border-color var(--duration-fast) var(--ease);
+  }
+
+  /* A hairline that firms up on hover. No lift, no shadow: cards are not floating objects. */
+  .card:hover {
+    border-color: var(--color-border-strong);
+  }
+
+  /* The focus ring belongs to the card, not just the title link, so keyboard position is
+     obvious in a dense grid. */
+  .card:has(.card__link:focus-visible) {
+    outline: var(--focus-ring-width) solid var(--color-focus);
+    outline-offset: var(--focus-ring-offset);
+  }
+
+  .card__link:focus-visible {
+    outline: none;
+  }
+
+  .card__media {
+    position: relative;
+    border-block-end: var(--border-width) solid var(--color-border);
+  }
+
+  .card__media-link {
+    display: block;
+  }
+
+  .card__media-overlay {
+    position: absolute;
+    inset-block-start: var(--space-2);
+    inset-inline-start: var(--space-2);
+    pointer-events: none;
+  }
+
+  .card__wishlist {
+    position: absolute;
+    inset-block-start: var(--space-1);
+    inset-inline-end: var(--space-1);
+  }
+
+  .card__wishlist .icon-button {
+    background-color: var(--color-surface);
+  }
+
+  .card__wishlist .icon-button[aria-pressed='true'] {
+    color: var(--color-danger);
+  }
+
+  .card__body {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    gap: var(--space-2);
+    padding: var(--space-3);
+  }
+
+  @media (min-width: 750px) {
+    .card__body {
+      padding: var(--space-4);
+    }
+  }
+
+  .card__vendor {
+    margin: 0;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+  }
+
+  .card__title {
+    margin: 0;
+    font-family: var(--font-body);
+    font-size: var(--text-ui);
+    line-height: var(--text-ui-lh);
+    font-weight: var(--weight-medium);
+    letter-spacing: 0;
+  }
+
+  .card__link {
+    text-decoration: none;
+  }
+
+  /* The whole card is clickable, but only the title is a real link — so the accessible name
+     stays clean and there is exactly one tab stop. */
+  .card__link::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+  }
+
+  .card__media {
+    position: relative;
+  }
+
+  .card:has(.card__link) {
+    position: relative;
+  }
+
+  /* Actions must sit above the full-card link overlay to stay clickable. */
+  .card__wishlist,
+  .card__form,
+  .card__body .button {
+    position: relative;
+    z-index: 1;
+  }
+
+  .card__form {
+    margin-block-start: auto;
+  }
+
+  .card__compare {
+    position: relative;
+    z-index: 1;
+  }
+
+  .card__compare-toggle {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-1);
+    min-height: var(--target-min);
+    color: var(--color-text-secondary);
+  }
+
+  .card__compare-toggle:hover {
+    color: var(--color-ink);
+    text-decoration: underline;
+  }
+
+  .card__compare-toggle[aria-pressed='true'] {
+    color: var(--color-primary);
+    font-weight: var(--weight-semibold);
+  }
+
+  .card__body > .price {
+    margin-block-start: auto;
+  }
+
+  .card__form + .price {
+    margin-block-start: 0;
+  }
+{% endstylesheet %}

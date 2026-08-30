@@ -1,0 +1,228 @@
+{% comment %}
+  Cart page.
+
+  A real <form> that posts to /cart with named quantity inputs and a real checkout submit, so it
+  works entirely without JavaScript. `cart.js` upgrades quantity changes to update in place.
+
+  Totals, discounts and taxes come from Shopify. Nothing on this page is computed in the browser
+  — a client-calculated total that disagrees with checkout destroys trust at the worst moment.
+{% endcomment %}
+
+<div class="cartpage page">
+  <h1 class="text-h1">{{ 'cart.title' | t }}</h1>
+
+  {%- if cart.item_count > 0 -%}
+    <form action="{{ routes.cart_url }}" method="post" novalidate class="cartpage__layout">
+      <div class="cartpage__items">
+        {% render 'cart-items', cart: cart %}
+
+        {%- if section.settings.show_note -%}
+          <details class="accordion cartpage__note">
+            <summary class="accordion__summary">
+              <span class="text-ui">{{ 'cart.order_note' | t }}</span>
+              {% render 'icon', name: 'chevron-down', class: 'accordion__chevron' %}
+            </summary>
+            <div class="accordion__body">
+              <label class="visually-hidden" for="cart-note">{{ 'cart.order_note' | t }}</label>
+              <textarea class="textarea" id="cart-note" name="note" rows="3">{{ cart.note }}</textarea>
+            </div>
+          </details>
+        {%- endif -%}
+      </div>
+
+      <aside class="cartpage__summary surface" aria-labelledby="cart-summary-title">
+        <h2 class="text-h3" id="cart-summary-title">{{ 'cart.subtotal' | t }}</h2>
+
+        {%- if cart.cart_level_discount_applications.size > 0 -%}
+          <ul class="cartpage__discounts" role="list">
+            {%- for discount in cart.cart_level_discount_applications -%}
+              <li class="cartpage__row text-ui cartpage__row--discount">
+                <span>{{ discount.title }}</span>
+                <span class="tabular">&minus;{{ discount.total_allocated_amount | money }}</span>
+              </li>
+            {%- endfor -%}
+          </ul>
+        {%- endif -%}
+
+        <div class="cartpage__row cartpage__row--total">
+          <span class="text-ui">{{ 'cart.subtotal' | t }}</span>
+          <span class="cartpage__total tabular">{{ cart.total_price | money }}</span>
+        </div>
+
+        <p class="text-caption text-secondary">{{ 'cart.taxes_note' | t }}</p>
+
+        <p class="cartpage__fulfilment text-caption text-secondary">
+          {% render 'icon', name: 'store', class: 'icon--sm' %}
+          {{ 'cart.fulfilment_note' | t }}
+        </p>
+
+        {%- comment -%}
+          A no-JS safety net: with JavaScript the quantity inputs update in place, without it
+          this button applies the typed quantities.
+        {%- endcomment -%}
+        <noscript>
+          <button class="button button--secondary button--full" type="submit" name="update">
+            {{ 'cart.update' | t }}
+          </button>
+        </noscript>
+
+        <button class="button button--primary button--full" type="submit" name="checkout">
+          {{ 'cart.checkout' | t }}
+        </button>
+
+        {%- comment -%}
+          Accelerated checkout buttons come from Shopify's enabled payment methods, so the page
+          can never advertise a wallet the merchant has not enabled.
+        {%- endcomment -%}
+        {%- if additional_checkout_buttons and section.settings.show_dynamic_checkout -%}
+          <div class="cartpage__wallets">{{ content_for_additional_checkout_buttons }}</div>
+        {%- endif -%}
+      </aside>
+    </form>
+
+    {%- if section.settings.cross_sell_collection != blank -%}
+      {%- assign cross = collections[section.settings.cross_sell_collection] -%}
+      {%- if cross != blank and cross.products.size > 0 -%}
+        {%- comment -%}
+          ONE restrained cross-sell. Nothing is ever added to the cart automatically and nothing
+          is pre-ticked.
+        {%- endcomment -%}
+        <section class="cartpage__cross">
+          <h2 class="text-h3">{{ 'cart.cross_sell_title' | t }}</h2>
+          <ul class="grid grid--products" role="list">
+            {%- for product in cross.products limit: 4 -%}
+              <li>{% render 'product-card', product: product, show_quick_add: false %}</li>
+            {%- endfor -%}
+          </ul>
+        </section>
+      {%- endif -%}
+    {%- endif -%}
+  {%- else -%}
+    <div class="empty-state surface">
+      {% render 'icon', name: 'cart', class: 'icon--xl' %}
+      <p class="empty-state__title text-h3">{{ 'cart.empty_title' | t }}</p>
+      <p class="text-body text-secondary">{{ 'cart.empty_body' | t }}</p>
+      <div class="empty-state__actions">
+        <a class="button button--primary" href="{{ routes.all_products_collection_url }}">
+          {{ 'general.actions.continue_shopping' | t }}
+        </a>
+        <a class="button button--secondary" href="{{ section.settings.device_finder_url | default: '/pages/trova-dispositivo' }}">
+          {{ 'device.open_finder' | t }}
+        </a>
+      </div>
+    </div>
+  {%- endif -%}
+</div>
+
+{% stylesheet %}
+  .cartpage {
+    padding-block: var(--space-6) var(--space-8);
+  }
+
+  .cartpage h1 {
+    margin-block-end: var(--space-5);
+  }
+
+  .cartpage__layout {
+    display: grid;
+    gap: var(--space-6);
+    align-items: start;
+  }
+
+  .cartpage__note {
+    margin-block-start: var(--space-4);
+  }
+
+  .cartpage__summary {
+    display: grid;
+    gap: var(--space-3);
+    padding: var(--space-5);
+  }
+
+  .cartpage__summary h2 {
+    margin: 0;
+  }
+
+  .cartpage__discounts {
+    list-style: none;
+    display: grid;
+    gap: var(--space-1);
+  }
+
+  .cartpage__row {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: var(--space-3);
+  }
+
+  .cartpage__row--discount {
+    color: var(--color-success-text);
+  }
+
+  .cartpage__row--total {
+    padding-block-start: var(--space-3);
+    border-block-start: var(--border-width) solid var(--color-border);
+  }
+
+  .cartpage__total {
+    font-family: var(--font-heading);
+    font-size: var(--text-price);
+    font-weight: var(--weight-heading);
+  }
+
+  .cartpage__fulfilment {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+  }
+
+  .cartpage__wallets {
+    display: grid;
+    gap: var(--space-2);
+  }
+
+  .cartpage__cross {
+    margin-block-start: var(--space-8);
+    padding-block-start: var(--space-5);
+    border-block-start: var(--border-width) solid var(--color-border);
+  }
+
+  .cartpage__cross h2 {
+    margin-block-end: var(--space-4);
+  }
+
+  @media (min-width: 990px) {
+    .cartpage__layout {
+      grid-template-columns: minmax(0, 1fr) 360px;
+      gap: var(--space-7);
+    }
+
+    .cartpage__summary {
+      position: sticky;
+      inset-block-start: calc(var(--header-height) + var(--space-4));
+    }
+  }
+{% endstylesheet %}
+
+{% schema %}
+{
+  "name": "t:names.main_cart",
+  "settings": [
+    { "type": "checkbox", "id": "show_note", "label": "Mostra le note per l'ordine", "default": true },
+    {
+      "type": "checkbox",
+      "id": "show_dynamic_checkout",
+      "label": "Mostra i pulsanti di pagamento rapido",
+      "default": true
+    },
+    {
+      "type": "collection",
+      "id": "cross_sell_collection",
+      "label": "Categoria per il suggerimento",
+      "info": "Un solo suggerimento, mai aggiunto automaticamente al carrello."
+    },
+    { "type": "url", "id": "device_finder_url", "label": "Pagina «Trova il tuo dispositivo»" }
+  ]
+}
+{% endschema %}

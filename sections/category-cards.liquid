@@ -1,0 +1,132 @@
+{% comment %}
+  Popular categories.
+
+  Cards are merchant-configured blocks pointing at real collections. The image comes from the
+  collection or from an override, so a category card can never advertise a category that does
+  not exist.
+
+  Consistent product photography, one visual treatment, no mixed illustration styles: this grid
+  is the first impression of whether the catalogue is coherent.
+{% endcomment %}
+
+{%- liquid
+  assign columns = section.settings.columns_desktop | default: 5
+-%}
+
+<section class="section">
+  <div class="page">
+    <header class="section-head">
+      <div>
+        {%- if section.settings.eyebrow != blank -%}
+          <p class="eyebrow">{{ section.settings.eyebrow }}</p>
+        {%- endif -%}
+        <h2 class="text-h2">{%- if section.settings.heading != blank -%}{{ section.settings.heading }}{%- else -%}{{ 'collections.title' | t }}{%- endif -%}</h2>
+      </div>
+
+      {%- if section.settings.link != blank -%}
+        <a class="section-head__link text-ui" href="{{ section.settings.link }}">
+          {%- if section.settings.link_label != blank -%}{{ section.settings.link_label }}{%- else -%}{{ 'general.actions.see_all' | t }}{%- endif -%}
+          {% render 'icon', name: 'arrow-right', class: 'icon--sm' %}
+        </a>
+      {%- endif -%}
+    </header>
+
+    {%- if section.blocks.size > 0 -%}
+      <ul class="cats" role="list" style="--cats-columns: {{ columns }};">
+        {%- for block in section.blocks -%}
+          {%- liquid
+            assign cat = collections[block.settings.collection]
+            assign image = block.settings.image | default: cat.featured_image
+            assign title = block.settings.heading | default: cat.title
+          -%}
+          {%- if cat != blank or block.settings.link != blank -%}
+            <li {{ block.shopify_attributes }}>
+              <a class="cat" href="{{ cat.url | default: block.settings.link }}">
+                <div class="cat__media">
+                  {%- if image != blank -%}
+                    <div class="media">
+                      <img
+                        src="{{ image | image_url: width: 400 }}"
+                        srcset="
+                          {{ image | image_url: width: 200 }} 200w,
+                          {{ image | image_url: width: 400 }} 400w,
+                          {{ image | image_url: width: 600 }} 600w
+                        "
+                        sizes="(min-width: 990px) 200px, 40vw"
+                        alt=""
+                        width="{{ image.width }}"
+                        height="{{ image.height }}"
+                        loading="lazy"
+                      >
+                    </div>
+                  {%- else -%}
+                    <div class="media media--empty">
+                      {% render 'icon', name: 'package', class: 'icon--lg' %}
+                    </div>
+                  {%- endif -%}
+                </div>
+
+                <span class="cat__title text-ui">{{ title }}</span>
+                {%- if block.settings.subheading != blank -%}
+                  <span class="cat__sub text-caption text-secondary">{{ block.settings.subheading }}</span>
+                {%- endif -%}
+              </a>
+            </li>
+          {%- endif -%}
+        {%- endfor -%}
+      </ul>
+    {%- endif -%}
+  </div>
+</section>
+
+
+
+{% schema %}
+{
+  "name": "t:names.popular_categories",
+  "tag": "section",
+  "class": "category-cards-section",
+  "max_blocks": 12,
+  "settings": [
+    { "type": "text", "id": "eyebrow", "label": "t:labels.eyebrow" },
+    { "type": "text", "id": "heading", "label": "t:labels.heading", "default": "Categorie popolari" },
+    { "type": "text", "id": "link_label", "label": "t:labels.link_label" },
+    { "type": "url", "id": "link", "label": "t:labels.link" },
+    {
+      "type": "range",
+      "id": "columns_desktop",
+      "min": 3,
+      "max": 6,
+      "step": 1,
+      "label": "t:labels.columns_desktop",
+      "default": 5
+    }
+  ],
+  "blocks": [
+    {
+      "type": "category",
+      "name": "t:labels.collection",
+      "settings": [
+        { "type": "collection", "id": "collection", "label": "t:labels.collection" },
+        { "type": "text", "id": "heading", "label": "t:labels.heading" },
+        { "type": "text", "id": "subheading", "label": "t:labels.subheading" },
+        { "type": "image_picker", "id": "image", "label": "t:labels.image" },
+        { "type": "url", "id": "link", "label": "t:labels.link" }
+      ]
+    }
+  ],
+  "presets": [
+    {
+      "name": "t:names.popular_categories",
+      "category": "t:categories.discovery",
+      "blocks": [
+        { "type": "category" },
+        { "type": "category" },
+        { "type": "category" },
+        { "type": "category" },
+        { "type": "category" }
+      ]
+    }
+  ]
+}
+{% endschema %}

@@ -1,0 +1,124 @@
+{% doc %}
+  In-store pickup availability for the SELECTED VARIANT.
+
+  Everything here comes from `variant.store_availabilities`, which Shopify derives from real
+  inventory at locations where the merchant has enabled pickup. The theme adds no logic of
+  its own to this.
+
+  THE RULE THAT MATTERS: never imply same-day collection because online stock exists. The
+  "ready in" time is Shopify's configured pickup time for that location, or the merchant's
+  configured processing time — and if neither is set, no time is shown at all. A wrong pickup
+  promise sends a real person to a shop for an item that is not there.
+
+  Pickup is variant-specific: a black case can be on the shelf while the blue one is not. This
+  block is re-rendered by `product.js` whenever the variant changes.
+
+  @param {object} variant - The currently selected variant.
+
+  @example
+  {% render 'pickup-status', variant: current_variant %}
+{% enddoc %}
+
+{%- liquid
+  assign availabilities = variant.store_availabilities
+  assign pickup_locations = availabilities | where: 'available', true
+-%}
+
+{%- if availabilities.size > 0 -%}
+  <div class="pickup">
+    {%- if pickup_locations.size > 0 -%}
+      {%- for availability in pickup_locations -%}
+        <div class="pickup__row pickup__row--available">
+          {% render 'icon', name: 'check-circle', class: 'icon--sm' %}
+          <div>
+            <p class="pickup__label text-ui">
+              {{- 'pickup.available_at' | t: location: availability.location.name -}}
+            </p>
+            {%- comment -%}
+              A time is rendered only when Shopify or the merchant has actually configured one.
+            {%- endcomment -%}
+            {%- if availability.pick_up_time != blank -%}
+              <p class="text-caption text-secondary">
+                {{ 'pickup.processing_time' | t: time: availability.pick_up_time }}
+              </p>
+            {%- elsif settings.pickup_processing_time != blank -%}
+              <p class="text-caption text-secondary">
+                {{ 'pickup.processing_time' | t: time: settings.pickup_processing_time }}
+              </p>
+            {%- endif -%}
+          </div>
+        </div>
+      {%- endfor -%}
+    {%- else -%}
+      <div class="pickup__row pickup__row--unavailable">
+        {% render 'icon', name: 'alert-circle', class: 'icon--sm' %}
+        <div>
+          <p class="pickup__label text-ui">{{ 'pickup.unavailable' | t }}</p>
+          <p class="text-caption text-secondary">{{ 'pickup.select_at_checkout' | t }}</p>
+        </div>
+      </div>
+    {%- endif -%}
+
+    {%- if settings.store_name != blank -%}
+      <a class="pickup__link text-ui" href="{{ pages.negozio.url | default: '/pages/negozio' }}">
+        {{ 'pickup.view_store_info' | t }}
+        {% render 'icon', name: 'chevron-right', class: 'icon--sm' %}
+      </a>
+    {%- endif -%}
+  </div>
+{%- endif -%}
+
+{% stylesheet %}
+  .pickup {
+    display: grid;
+    gap: var(--space-2);
+    padding: var(--space-4);
+    border: var(--border-width) solid var(--color-border);
+    border-radius: var(--radius-card);
+    background-color: var(--color-surface);
+  }
+
+  .pickup__row {
+    display: flex;
+    align-items: flex-start;
+    gap: var(--space-3);
+  }
+
+  .pickup__row .icon {
+    margin-block-start: 2px;
+    flex: none;
+  }
+
+  .pickup__label {
+    margin: 0;
+    font-weight: var(--weight-semibold);
+  }
+
+  .pickup__row p + p {
+    margin-block-start: 2px;
+  }
+
+  /* Green means genuine availability. Each state also has its own icon, so the meaning never
+     depends on colour alone. */
+  .pickup__row--available {
+    color: var(--color-success-text);
+  }
+
+  .pickup__row--available .text-caption {
+    color: var(--color-text-secondary);
+  }
+
+  .pickup__row--unavailable {
+    color: var(--color-text-secondary);
+  }
+
+  .pickup__link {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-1);
+    min-height: var(--target-min);
+    color: var(--color-primary);
+    font-weight: var(--weight-medium);
+    text-decoration: none;
+  }
+{% endstylesheet %}

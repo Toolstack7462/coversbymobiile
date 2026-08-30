@@ -1,0 +1,265 @@
+{
+  "sections": {
+    "hero": {
+      "type": "hero",
+      "settings": {
+        "heading": "Accessori per il tuo smartphone. Online e nel nostro negozio.",
+        "body": "Cover, vetri, caricatori, cavi, power bank e molto altro.",
+        "link_label": "Acquista ora",
+        "secondary_link_label": "Trova il tuo dispositivo",
+        "secondary_link": "/pages/trova-dispositivo",
+        "tertiary_link_label": "Visita il negozio",
+        "tertiary_link": "/pages/negozio",
+        "layout": "split"
+      }
+    },
+    "device-finder": {
+      "type": "device-finder",
+      "settings": {
+        "eyebrow": "Compatibilita garantita",
+        "compact": true
+      }
+    },
+    "popular-categories": {
+      "type": "category-cards",
+      "blocks": {
+        "cat-1": {
+          "type": "category",
+          "settings": {
+            "heading": "Cover"
+          }
+        },
+        "cat-2": {
+          "type": "category",
+          "settings": {
+            "heading": "Vetri e protezione"
+          }
+        },
+        "cat-3": {
+          "type": "category",
+          "settings": {
+            "heading": "Caricatori"
+          }
+        },
+        "cat-4": {
+          "type": "category",
+          "settings": {
+            "heading": "Cavi"
+          }
+        },
+        "cat-5": {
+          "type": "category",
+          "settings": {
+            "heading": "Power Bank"
+          }
+        },
+        "cat-6": {
+          "type": "category",
+          "settings": {
+            "heading": "MagSafe e magnetici"
+          }
+        },
+        "cat-7": {
+          "type": "category",
+          "settings": {
+            "heading": "Auricolari"
+          }
+        },
+        "cat-8": {
+          "type": "category",
+          "settings": {
+            "heading": "Supporti Auto"
+          }
+        },
+        "cat-9": {
+          "type": "category",
+          "settings": {
+            "heading": "Smartwatch"
+          }
+        },
+        "cat-10": {
+          "type": "category",
+          "settings": {
+            "heading": "Offerte"
+          }
+        }
+      },
+      "block_order": [
+        "cat-1",
+        "cat-2",
+        "cat-3",
+        "cat-4",
+        "cat-5",
+        "cat-6",
+        "cat-7",
+        "cat-8",
+        "cat-9",
+        "cat-10"
+      ],
+      "settings": {
+        "heading": "Categorie popolari",
+        "columns_desktop": 5
+      }
+    },
+    "best-sellers": {
+      "type": "featured-products",
+      "settings": {
+        "heading": "I piu venduti",
+        "products_to_show": 8,
+        "show_vendor": true,
+        "show_rating": true,
+        "show_swatches": true,
+        "show_quick_add": true
+      }
+    },
+    "shop-by-brand": {
+      "type": "shop-by-brand",
+      "settings": {
+        "eyebrow": "Trova per dispositivo",
+        "heading": "Acquista per marca"
+      }
+    },
+    "campaign": {
+      "type": "campaign",
+      "settings": {
+        "reverse": false
+      }
+    },
+    "new-arrivals": {
+      "type": "featured-products",
+      "settings": {
+        "heading": "Nuovi arrivi",
+        "products_to_show": 4,
+        "show_vendor": true,
+        "show_rating": true,
+        "show_swatches": true,
+        "show_quick_add": true
+      }
+    },
+    "bundles": {
+      "type": "bundles",
+      "blocks": {
+        "bundle-1": {
+          "type": "bundle",
+          "settings": {
+            "heading": "Protezione completa"
+          }
+        },
+        "bundle-2": {
+          "type": "bundle",
+          "settings": {
+            "heading": "Kit essenziale"
+          }
+        },
+        "bundle-3": {
+          "type": "bundle",
+          "settings": {
+            "heading": "Kit auto"
+          }
+        }
+      },
+      "block_order": [
+        "bundle-1",
+        "bundle-2",
+        "bundle-3"
+      ],
+      "settings": {
+        "heading": "Kit e bundle",
+        "body": "Combinazioni pensate per il tuo dispositivo."
+      }
+    },
+    "store-pickup": {
+      "type": "store-pickup",
+      "settings": {
+        "eyebrow": "Il nostro negozio",
+        "link_label": "Scopri il negozio",
+        "link": "/pages/negozio"
+      }
+    },
+    "why-us": {
+      "type": "why-us",
+      "blocks": {
+        "reason-1": {
+          "type": "reason",
+          "settings": {
+            "icon": "device"
+          }
+        },
+        "reason-2": {
+          "type": "reason",
+          "settings": {
+            "icon": "store"
+          }
+        },
+        "reason-3": {
+          "type": "reason",
+          "settings": {
+            "icon": "shield-check"
+          }
+        },
+        "reason-4": {
+          "type": "reason",
+          "settings": {
+            "icon": "whatsapp"
+          }
+        }
+      },
+      "block_order": [
+        "reason-1",
+        "reason-2",
+        "reason-3",
+        "reason-4"
+      ],
+      "settings": {
+        "heading": "Perche sceglierci"
+      }
+    },
+    "recently-viewed": {
+      "type": "recently-viewed",
+      "settings": {
+        "products_to_show": 4
+      }
+    },
+    "reviews": {
+      "type": "reviews",
+      "settings": {
+        "heading": "Recensioni"
+      }
+    },
+    "guides": {
+      "type": "guides",
+      "settings": {
+        "eyebrow": "Guide all'acquisto",
+        "heading": "Come scegliere",
+        "posts_to_show": 3
+      }
+    },
+    "newsletter": {
+      "type": "newsletter",
+      "settings": {}
+    },
+    "seo-intro": {
+      "type": "rich-text",
+      "settings": {
+        "width": "narrow"
+      }
+    }
+  },
+  "order": [
+    "hero",
+    "device-finder",
+    "popular-categories",
+    "best-sellers",
+    "shop-by-brand",
+    "campaign",
+    "new-arrivals",
+    "bundles",
+    "store-pickup",
+    "why-us",
+    "recently-viewed",
+    "reviews",
+    "guides",
+    "newsletter",
+    "seo-intro"
+  ]
+}

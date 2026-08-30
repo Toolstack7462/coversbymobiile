@@ -1,0 +1,207 @@
+{% doc %}
+  Variant selector.
+
+  Built from real radio inputs inside fieldsets, one fieldset per option. That gives correct
+  grouping and announcement for screen readers, arrow-key navigation for free, and — because
+  each radio is inside a form that submits to the product page — a working no-JavaScript path.
+
+  Unavailable combinations are marked, not hidden. Hiding them makes a customer think the store
+  never stocked their colour; marking them tells the truth.
+
+  Colour swatches always carry a text label as well as a colour, because colour alone is not an
+  accessible cue and "Blu notte" versus "Blu" is a distinction a swatch cannot make.
+
+  @param {object} product - The product.
+
+  @example
+  {% render 'variant-picker', product: product %}
+{% enddoc %}
+
+<variant-picker class="variants" data-url="{{ product.url }}">
+  {%- for option in product.options_with_values -%}
+    {%- liquid
+      assign option_name = option.name | downcase
+      assign is_swatch = false
+      if option_name == 'colore' or option_name == 'color' or option_name == 'colour'
+        assign is_swatch = true
+      endif
+    -%}
+
+    <fieldset class="variants__group" data-option-position="{{ option.position }}">
+      <legend class="variants__legend text-ui">
+        {{ option.name }}:
+        <span class="variants__selected" data-selected-value="{{ option.position }}">
+          {{- option.selected_value -}}
+        </span>
+      </legend>
+
+      <div class="variants__options{% if is_swatch %} variants__options--swatch{% endif %}">
+        {%- for value in option.values -%}
+          {%- liquid
+            assign input_id = 'option-' | append: option.position | append: '-' | append: forloop.index
+            assign swatch_style = ''
+            if value.swatch.color
+              assign swatch_style = 'background-color: ' | append: value.swatch.color | append: ';'
+            elsif value.swatch.image
+              assign swatch_url = value.swatch.image | image_url: width: 80
+              assign swatch_style = 'background-image: url(' | append: swatch_url | append: ');'
+            endif
+          -%}
+
+          <input
+            class="variants__input visually-hidden"
+            type="radio"
+            id="{{ input_id }}"
+            name="option-{{ option.position }}"
+            value="{{ value | escape }}"
+            data-option-position="{{ option.position }}"
+            {% if option.selected_value == value %}checked{% endif %}
+            {% unless value.available %}data-unavailable="true"{% endunless %}
+          >
+          <label
+            class="variants__label{% if is_swatch %} variants__label--swatch{% endif %}{% unless value.available %} is-unavailable{% endunless %}"
+            for="{{ input_id }}"
+            {% if is_swatch and swatch_style != blank %}style="{{ swatch_style }}"{% endif %}
+          >
+            {%- if is_swatch -%}
+              <span class="visually-hidden">
+                {{- value -}}
+                {%- unless value.available %} — {{ 'products.variant_unavailable' | t: value: value }}{% endunless -%}
+              </span>
+            {%- else -%}
+              {{ value }}
+              {%- unless value.available -%}
+                <span class="visually-hidden">
+                  — {{ 'products.variant_unavailable' | t: value: value }}
+                </span>
+              {%- endunless -%}
+            {%- endif -%}
+          </label>
+        {%- endfor -%}
+      </div>
+    </fieldset>
+  {%- endfor -%}
+
+  {%- comment -%}
+    A compact variant map: only the fields the client actually needs. Emitting the full variant
+    objects would add kilobytes of JSON to parse on load for no benefit, which is exactly the
+    kind of thing that quietly ruins INP.
+  {%- endcomment -%}
+  <script type="application/json" data-variant-map>
+    [
+      {%- for variant in product.variants -%}
+        {
+          "id": {{ variant.id }},
+          "options": {{ variant.options | json }},
+          "available": {{ variant.available | json }},
+          "price": {{ variant.price }},
+          "compare_at_price": {{ variant.compare_at_price | default: 0 }},
+          "sku": {{ variant.sku | json }},
+          "media_id": {{ variant.featured_media.id | default: 0 }},
+          "inventory_policy": {{ variant.inventory_policy | json }},
+          "inventory_quantity": {{ variant.inventory_quantity | default: 0 }},
+          "inventory_management": {{ variant.inventory_management | json }}
+        }{% unless forloop.last %},{% endunless %}
+      {%- endfor -%}
+    ]
+  </script>
+</variant-picker>
+
+{% stylesheet %}
+  .variants {
+    display: grid;
+    gap: var(--space-4);
+  }
+
+  .variants__group {
+    border: 0;
+    padding: 0;
+    margin: 0;
+  }
+
+  .variants__legend {
+    padding: 0;
+    margin-block-end: var(--space-2);
+    color: var(--color-text-secondary);
+  }
+
+  .variants__selected {
+    color: var(--color-ink);
+    font-weight: var(--weight-semibold);
+  }
+
+  .variants__options {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-2);
+  }
+
+  .variants__label {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: var(--target-min);
+    min-width: var(--target-min);
+    padding-inline: var(--space-4);
+    border: var(--border-width) solid var(--color-border-strong);
+    border-radius: var(--radius-control);
+    background-color: var(--color-surface);
+    font-size: var(--text-ui);
+    font-weight: var(--weight-medium);
+    cursor: pointer;
+    transition:
+      border-color var(--duration-fast) var(--ease),
+      background-color var(--duration-fast) var(--ease);
+  }
+
+  .variants__label:hover {
+    border-color: var(--color-ink);
+  }
+
+  .variants__input:checked + .variants__label {
+    border-color: var(--color-ink);
+    background-color: var(--color-ink);
+    color: var(--color-surface);
+  }
+
+  /* The focus ring has to be drawn on the label, since the input itself is visually hidden. */
+  .variants__input:focus-visible + .variants__label {
+    outline: var(--focus-ring-width) solid var(--color-focus);
+    outline-offset: var(--focus-ring-offset);
+  }
+
+  /* Unavailable is shown, not hidden: struck through and dimmed, still selectable so the
+     customer can see what that combination would cost and when it returns. */
+  .variants__label.is-unavailable {
+    color: var(--color-text-secondary);
+    text-decoration: line-through;
+    border-style: dashed;
+  }
+
+  .variants__options--swatch .variants__label {
+    width: 40px;
+    height: 40px;
+    min-width: 0;
+    padding: 0;
+    border-radius: 50%;
+    background-size: cover;
+    background-position: center;
+    position: relative;
+  }
+
+  /* Expand the swatch hit area to the 44px minimum without enlarging the dot. */
+  .variants__options--swatch .variants__label::after {
+    content: '';
+    position: absolute;
+    inset: -2px;
+  }
+
+  .variants__options--swatch .variants__input:checked + .variants__label {
+    box-shadow: 0 0 0 2px var(--color-surface), 0 0 0 4px var(--color-ink);
+  }
+
+  .variants__options--swatch .variants__label.is-unavailable {
+    opacity: 0.45;
+    text-decoration: none;
+  }
+{% endstylesheet %}

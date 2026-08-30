@@ -1,0 +1,111 @@
+{% comment %}
+  404.
+
+  A 404 is a customer who wanted something specific and did not get it, so this page offers a
+  search field first and category shortcuts second. A bare "page not found" with a home link
+  wastes the visit.
+{% endcomment %}
+
+<div class="page notfound">
+  <div class="notfound__inner">
+    <p class="eyebrow">404</p>
+    <h1 class="text-h1">{{ 'errors.404_title' | t }}</h1>
+    <p class="text-body text-secondary text-measure">{{ 'errors.404_body' | t }}</p>
+
+    <div class="notfound__search">
+      <p class="text-ui">{{ 'errors.404_search' | t }}</p>
+      {% render 'predictive-search', id: 'notfound-search' %}
+    </div>
+
+    <div class="notfound__actions">
+      <a class="button button--primary" href="{{ routes.root_url }}">{{ 'errors.404_home' | t }}</a>
+      <a class="button button--secondary" href="{{ section.settings.device_finder_url | default: '/pages/trova-dispositivo' }}">
+        {{ 'device.open_finder' | t }}
+      </a>
+    </div>
+
+    {%- assign shortcuts = section.blocks | where: 'type', 'collection' -%}
+    {%- if shortcuts.size > 0 -%}
+      <div class="notfound__shortcuts">
+        <p class="eyebrow">{{ 'collections.title' | t }}</p>
+        <ul class="notfound__chips" role="list">
+          {%- for block in shortcuts -%}
+            {%- assign target = collections[block.settings.collection] -%}
+            {%- if target != blank -%}
+              <li {{ block.shopify_attributes }}>
+                <a class="chip" href="{{ target.url }}">{{ target.title }}</a>
+              </li>
+            {%- endif -%}
+          {%- endfor -%}
+        </ul>
+      </div>
+    {%- endif -%}
+  </div>
+</div>
+
+{% stylesheet %}
+  .notfound {
+    padding-block: var(--space-8);
+  }
+
+  .notfound__inner {
+    display: grid;
+    gap: var(--space-3);
+    max-width: 640px;
+    margin-inline: auto;
+    text-align: center;
+    justify-items: center;
+  }
+
+  .notfound h1 {
+    margin: 0;
+  }
+
+  .notfound__search {
+    width: 100%;
+    display: grid;
+    gap: var(--space-2);
+    margin-block-start: var(--space-4);
+  }
+
+  .notfound__actions {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: var(--space-2);
+    margin-block-start: var(--space-2);
+  }
+
+  .notfound__shortcuts {
+    margin-block-start: var(--space-5);
+    padding-block-start: var(--space-4);
+    border-block-start: var(--border-width) solid var(--color-border);
+    width: 100%;
+  }
+
+  .notfound__chips {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: var(--space-2);
+    margin-block-start: var(--space-2);
+    list-style: none;
+  }
+{% endstylesheet %}
+
+{% schema %}
+{
+  "name": "t:names.main_404",
+  "settings": [
+    { "type": "url", "id": "device_finder_url", "label": "Pagina «Trova il tuo dispositivo»" }
+  ],
+  "blocks": [
+    {
+      "type": "collection",
+      "name": "t:labels.collection",
+      "limit": 8,
+      "settings": [{ "type": "collection", "id": "collection", "label": "t:labels.collection" }]
+    }
+  ]
+}
+{% endschema %}

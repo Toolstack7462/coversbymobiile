@@ -1,0 +1,74 @@
+{% comment %}
+  Wishlist page.
+
+  HONEST SCOPE: this is a guest wishlist held in the customer's browser. It is not synced to
+  their account and not shared across devices. The page says so plainly rather than letting the
+  customer assume otherwise and lose their list when they switch phone.
+
+  Cross-device sync would need a customer-account app or a custom app with a datastore. That is
+  documented in docs/app-stack.md as a decision for the merchant, not faked here.
+{% endcomment %}
+
+<div class="wishlistpage page">
+  {% render 'breadcrumbs' %}
+
+  <header class="wishlistpage__header">
+    <h1 class="text-h1">{{ 'wishlist.title' | t }}</h1>
+    <p class="text-ui text-secondary">
+      {% render 'icon', name: 'info', class: 'icon--sm' %}
+      {{ 'wishlist.local_only_note' | t }}
+    </p>
+  </header>
+
+  <wishlist-page data-wishlist-page>
+    <div class="empty-state surface" data-wishlist-empty>
+      {% render 'icon', name: 'heart', class: 'icon--xl' %}
+      <p class="empty-state__title text-h3">{{ 'wishlist.empty_title' | t }}</p>
+      <p class="text-ui text-secondary">{{ 'wishlist.empty_body' | t }}</p>
+      <div class="empty-state__actions">
+        <a class="button button--primary" href="{{ routes.all_products_collection_url }}">
+          {{ 'general.actions.continue_shopping' | t }}
+        </a>
+        <a class="button button--secondary" href="{{ section.settings.device_finder_url | default: '/pages/trova-dispositivo' }}">
+          {{ 'device.open_finder' | t }}
+        </a>
+      </div>
+    </div>
+
+    <div data-wishlist-target hidden></div>
+  </wishlist-page>
+</div>
+
+<script type="module" src="{{ 'wishlist-page.js' | asset_url }}"></script>
+
+{% stylesheet %}
+  .wishlistpage {
+    padding-block: var(--space-5) var(--space-8);
+  }
+
+  .wishlistpage__header {
+    display: grid;
+    gap: var(--space-2);
+    margin-block-end: var(--space-5);
+  }
+
+  .wishlistpage__header h1 {
+    margin: 0;
+  }
+
+  .wishlistpage__header p {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+  }
+{% endstylesheet %}
+
+{% schema %}
+{
+  "name": "t:names.wishlist",
+  "settings": [
+    { "type": "url", "id": "device_finder_url", "label": "Pagina «Trova il tuo dispositivo»" },
+    { "type": "paragraph", "content": "t:info.local_storage" }
+  ]
+}
+{% endschema %}

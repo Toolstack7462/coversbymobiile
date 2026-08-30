@@ -1,0 +1,109 @@
+{% doc %}
+  Free shipping progress.
+
+  INTEGRITY RULE: renders only when the merchant has BOTH enabled the bar and configured a real
+  threshold. A progress bar toward a threshold that is not actually configured in Shopify's
+  shipping settings is a false promise, and the customer discovers it at checkout — the worst
+  possible moment.
+
+  The threshold is a plain amount in cents. It is the merchant's responsibility to keep it in
+  step with their shipping profile; `docs/merchant-guide.md` says so explicitly.
+
+  @param {object} cart - The cart object.
+
+  @example
+  {% render 'free-shipping-bar', cart: cart %}
+{% enddoc %}
+
+{%- liquid
+  assign threshold = settings.free_shipping_threshold | plus: 0
+  assign enabled = false
+  if settings.show_free_shipping_bar and threshold > 0
+    assign enabled = true
+  endif
+-%}
+
+{%- if enabled -%}
+  {%- liquid
+    assign total = cart.total_price
+    assign remaining = threshold | minus: total
+    assign reached = false
+    if remaining <= 0
+      assign reached = true
+      assign percent = 100
+    else
+      assign percent = total | times: 100 | divided_by: threshold
+    endif
+  -%}
+
+  <div class="shipbar{% if reached %} shipbar--reached{% endif %}">
+    <p class="shipbar__label text-ui">
+      {%- if reached -%}
+        {% render 'icon', name: 'check-circle', class: 'icon--sm' %}
+        {{ 'cart.free_shipping_reached' | t }}
+      {%- else -%}
+        {% render 'icon', name: 'truck', class: 'icon--sm' %}
+        {%- assign remaining_money = remaining | money -%}
+        {{ 'cart.free_shipping_progress' | t: amount: remaining_money }}
+      {%- endif -%}
+    </p>
+
+    {%- comment -%}
+      A native progress element: it is announced correctly and needs no ARIA.
+    {%- endcomment -%}
+    <progress class="shipbar__meter" value="{{ percent }}" max="100">{{ percent }}%</progress>
+  </div>
+{%- endif -%}
+
+{% stylesheet %}
+  .shipbar {
+    display: grid;
+    gap: var(--space-2);
+    padding: var(--space-3) var(--space-4);
+    background-color: var(--color-surface-sunken);
+    border-block-end: var(--border-width) solid var(--color-border);
+  }
+
+  .shipbar__label {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    margin: 0;
+    font-weight: var(--weight-medium);
+  }
+
+  .shipbar--reached .shipbar__label {
+    color: var(--color-success-text);
+  }
+
+  .shipbar__meter {
+    appearance: none;
+    width: 100%;
+    height: 6px;
+    border: 0;
+    border-radius: var(--radius-chip);
+    background-color: var(--color-border);
+    overflow: hidden;
+  }
+
+  .shipbar__meter::-webkit-progress-bar {
+    background-color: var(--color-border);
+  }
+
+  .shipbar__meter::-webkit-progress-value {
+    background-color: var(--color-primary);
+    transition: width var(--duration-slow) var(--ease);
+  }
+
+  .shipbar__meter::-moz-progress-bar {
+    background-color: var(--color-primary);
+  }
+
+  .shipbar--reached .shipbar__meter::-webkit-progress-value {
+    background-color: var(--color-success);
+  }
+
+  .shipbar--reached .shipbar__meter::-moz-progress-bar {
+    background-color: var(--color-success);
+  }
+{% endstylesheet %}

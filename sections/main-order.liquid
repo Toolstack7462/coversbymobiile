@@ -1,0 +1,130 @@
+{% comment %}
+  Single order detail.
+
+  Order data comes entirely from Shopify. The theme displays it and never recalculates a total.
+{% endcomment %}
+
+<div class="orderpage page">
+  <header class="orderpage__header">
+    <h1 class="text-h1">{{ 'customers.order.title' | t: name: order.name }}</h1>
+    <p class="text-ui text-secondary">
+      {%- assign placed = order.created_at | date: '%d/%m/%Y' -%}
+      {{ 'customers.order.date' | t: date: placed }}
+    </p>
+    <p class="text-ui">
+      {{ 'customers.order.status' | t }}: <strong>{{ order.fulfillment_status_label }}</strong>
+    </p>
+  </header>
+
+  <div class="scroll-x">
+    <table class="orders">
+      <caption class="visually-hidden">{{ 'customers.order.title' | t: name: order.name }}</caption>
+      <thead>
+        <tr>
+          <th scope="col">{{ 'products.description' | t }}</th>
+          <th scope="col">{{ 'products.quantity' | t }}</th>
+          <th scope="col">{{ 'price.regular' | t }}</th>
+        </tr>
+      </thead>
+      <tbody>
+        {%- for line_item in order.line_items -%}
+          <tr>
+            <td>
+              <a href="{{ line_item.product.url }}">{{ line_item.title }}</a>
+              {%- if line_item.sku != blank -%}
+                <br><span class="text-caption text-secondary tabular">{{ line_item.sku }}</span>
+              {%- endif -%}
+            </td>
+            <td class="tabular">{{ line_item.quantity }}</td>
+            <td class="tabular">{{ line_item.final_line_price | money }}</td>
+          </tr>
+        {%- endfor -%}
+      </tbody>
+      <tfoot>
+        <tr>
+          <th scope="row" colspan="2">{{ 'cart.subtotal' | t }}</th>
+          <td class="tabular">{{ order.subtotal_price | money }}</td>
+        </tr>
+        {%- for shipping_method in order.shipping_methods -%}
+          <tr>
+            <th scope="row" colspan="2">{{ shipping_method.title }}</th>
+            <td class="tabular">{{ shipping_method.price | money }}</td>
+          </tr>
+        {%- endfor -%}
+        <tr>
+          <th scope="row" colspan="2">{{ 'cart.subtotal' | t }}</th>
+          <td class="tabular"><strong>{{ order.total_price | money }}</strong></td>
+        </tr>
+      </tfoot>
+    </table>
+  </div>
+
+  <div class="orderpage__addresses">
+    {%- if order.shipping_address -%}
+      <div class="surface orderpage__address-card">
+        <h2 class="text-h3">{{ 'store.address' | t }}</h2>
+        <address class="text-ui">{{ order.shipping_address | format_address }}</address>
+      </div>
+    {%- endif -%}
+
+    {%- if order.billing_address -%}
+      <div class="surface orderpage__address-card">
+        <h2 class="text-h3">{{ 'customers.account.details' | t }}</h2>
+        <address class="text-ui">{{ order.billing_address | format_address }}</address>
+      </div>
+    {%- endif -%}
+  </div>
+
+  <a class="button button--secondary" href="{{ routes.account_url }}">
+    {{ 'general.actions.back' | t }}
+  </a>
+</div>
+
+{% stylesheet %}
+  .orderpage {
+    padding-block: var(--space-6) var(--space-8);
+    display: grid;
+    gap: var(--space-5);
+    justify-items: start;
+  }
+
+  .orderpage__header {
+    display: grid;
+    gap: var(--space-1);
+  }
+
+  .orderpage__header h1 {
+    margin: 0;
+  }
+
+  .orderpage__header p {
+    margin: 0;
+  }
+
+  .orderpage__addresses {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: var(--space-4);
+    width: 100%;
+  }
+
+  .orderpage__address-card {
+    padding: var(--space-4);
+  }
+
+  .orderpage__address-card h2 {
+    margin-block-end: var(--space-2);
+  }
+
+  .orderpage__address-card address {
+    font-style: normal;
+    color: var(--color-text-secondary);
+  }
+{% endstylesheet %}
+
+{% schema %}
+{
+  "name": "Ordine",
+  "settings": []
+}
+{% endschema %}

@@ -1,0 +1,388 @@
+{% comment %}
+  Device finder — "Trova accessori per il tuo dispositivo".
+
+  ARCHITECTURE: the whole brand > family > model tree is rendered server-side as nested
+  <details> elements containing real links. That means:
+  - it works completely without JavaScript (every model is a link to its collection),
+  - it is keyboard operable and announces expanded state with no ARIA,
+  - there is no JSON blob to parse on load, which keeps the homepage INP budget intact.
+
+  `assets/device-finder.js` upgrades it: instant model search across names AND aliases, popular
+  and recently-selected shortcuts, and saving the choice to localStorage so the rest of the
+  storefront can resolve compatibility against it.
+
+  DATA: brands, families and models are Shopify metaobjects. If they are not configured yet the
+  section renders an explicit setup message to the merchant rather than an empty box or, worse,
+  a hardcoded list of phones the shop may not stock accessories for.
+{% endcomment %}
+
+{%- liquid
+  assign brands = shop.metaobjects.device_brand.values | sort: 'sort_order'
+  assign families = shop.metaobjects.device_family.values | sort: 'sort_order'
+  assign models = shop.metaobjects.device_model.values | sort: 'sort_order'
+
+  assign has_data = false
+  if brands.size > 0 and models.size > 0
+    assign has_data = true
+  endif
+-%}
+
+<section class="finder{% if section.settings.compact %} finder--compact{% endif %}">
+  <div class="finder__inner page">
+    <header class="finder__header">
+      {%- if section.settings.eyebrow != blank -%}
+        <p class="eyebrow">{{ section.settings.eyebrow }}</p>
+      {%- endif -%}
+      <h2 class="finder__title text-h2">
+        {%- if section.settings.heading != blank -%}{{ section.settings.heading }}{%- else -%}{{ 'device.finder_title' | t }}{%- endif -%}
+      </h2>
+      <p class="finder__subtitle text-body text-secondary">
+        {%- if section.settings.subheading != blank -%}{{ section.settings.subheading }}{%- else -%}{{ 'device.finder_subtitle' | t }}{%- endif -%}
+      </p>
+    </header>
+
+    {%- if has_data -%}
+      <device-finder class="finder__body" data-finder>
+        {%- comment -%}
+          Current selection. Filled in by JavaScript; invisible until a device is chosen, so a
+          cached page never shows the previous visitor's phone.
+        {%- endcomment -%}
+        <div class="finder__current surface--device" data-finder-current hidden>
+          {% render 'icon', name: 'check-circle', class: 'icon--sm' %}
+          <span class="text-ui">
+            {{ 'device.my_device' | t }}: <strong data-finder-current-name></strong>
+          </span>
+          <button class="finder__clear" type="button" data-finder-clear>
+            {{ 'device.remove_device' | t }}
+          </button>
+        </div>
+
+        <div class="finder__search">
+          <label class="visually-hidden" for="finder-search">
+            {{- 'device.search_model_label' | t -}}
+          </label>
+          <div class="finder__search-field">
+            {% render 'icon', name: 'search', class: 'finder__search-icon' %}
+            <input
+              class="input finder__input"
+              id="finder-search"
+              type="search"
+              placeholder="{{ 'device.search_model_placeholder' | t }}"
+              autocomplete="off"
+              spellcheck="false"
+              data-finder-search
+            >
+          </div>
+        </div>
+
+        {%- comment -%}
+          Search results. Populated by filtering the rendered model list, so there is no second
+          source of truth and no network request.
+        {%- endcomment -%}
+        <div class="finder__results" data-finder-results hidden>
+          <p class="eyebrow">{{ 'device.all_models' | t }}</p>
+          <ul class="finder__model-list" role="list" data-finder-result-list></ul>
+          <p class="finder__no-results text-ui text-secondary" data-finder-empty hidden>
+            {{ 'device.no_models_title' | t }} — {{ 'device.no_models_body' | t }}
+          </p>
+        </div>
+
+        <div class="finder__recent" data-finder-recent hidden>
+          <p class="eyebrow">{{ 'device.recent_models' | t }}</p>
+          <ul class="finder__chips" role="list" data-finder-recent-list></ul>
+        </div>
+
+        <div class="finder__tree" data-finder-tree>
+          {%- for brand in brands -%}
+            {%- if brand.active.value == false -%}{%- continue -%}{%- endif -%}
+
+            <details class="finder__brand">
+              <summary class="finder__brand-summary">
+                {%- if brand.logo.value != blank -%}
+                  <img
+                    class="finder__brand-logo"
+                    src="{{ brand.logo.value | image_url: width: 120 }}"
+                    alt=""
+                    width="60"
+                    height="30"
+                    loading="lazy"
+                  >
+                {%- endif -%}
+                <span class="finder__brand-name text-ui">{{ brand.name.value }}</span>
+                {% render 'icon', name: 'chevron-down', class: 'icon--sm' %}
+              </summary>
+
+              <div class="finder__families">
+                {%- assign brand_families = families | where: 'brand', brand -%}
+                {%- for family in brand_families -%}
+                  {%- if family.active.value == false -%}{%- continue -%}{%- endif -%}
+
+                  <div class="finder__family">
+                    <p class="finder__family-name eyebrow">{{ family.name.value }}</p>
+                    <ul class="finder__model-list" role="list">
+                      {%- assign family_models = models | where: 'family', family -%}
+                      {%- for model in family_models -%}
+                        {%- if model.active.value == false -%}{%- continue -%}{%- endif -%}
+                        {%- liquid
+                          assign model_url = model.collection.value.url
+                          if model_url == blank
+                            # Encode the QUERY only. Encoding the whole concatenation would
+                            # percent-encode the path separators too and produce a 404.
+                            assign model_query = model.name.value | url_encode
+                            assign model_url = routes.search_url | append: '?q=' | append: model_query
+                          endif
+                        -%}
+                        <li>
+                          <a
+                            class="finder__model"
+                            href="{{ model_url }}"
+                            data-model-handle="{{ model.system.handle }}"
+                            data-model-name="{{ model.name.value | escape }}"
+                            data-model-brand="{{ brand.name.value | escape }}"
+                            data-model-aliases="{{ model.aliases.value | escape }}"
+                          >
+                            {{ model.name.value }}
+                          </a>
+                        </li>
+                      {%- endfor -%}
+                    </ul>
+                  </div>
+                {%- endfor -%}
+              </div>
+            </details>
+          {%- endfor -%}
+        </div>
+
+        <a class="finder__all text-ui" href="{{ routes.all_products_collection_url }}">
+          {{ 'device.show_all_products' | t }}
+          {% render 'icon', name: 'arrow-right', class: 'icon--sm' %}
+        </a>
+      </device-finder>
+
+      <script type="module" src="{{ 'device-finder.js' | asset_url }}"></script>
+    {%- else -%}
+      {%- comment -%}
+        Merchant-facing setup state. Never a fabricated device list: showing phones the shop has
+        no accessories for would be worse than showing nothing.
+      {%- endcomment -%}
+      <div class="finder__setup surface">
+        {% render 'icon', name: 'settings', class: 'icon--xl' %}
+        <p class="text-h3">{{ 'errors.missing_config_title' | t }}</p>
+        <p class="text-ui text-secondary text-measure">
+          {{ 'errors.missing_config_body' | t }}
+          {{ 'device.finder_subtitle' | t }}
+        </p>
+        <p class="text-caption text-secondary">
+          Impostazioni &gt; Contenuti personalizzati &gt; device_brand, device_family, device_model.
+          Consulta docs/device-management-guide.md.
+        </p>
+      </div>
+    {%- endif -%}
+  </div>
+</section>
+
+{% stylesheet %}
+  .finder {
+    padding-block: var(--space-7);
+    background-color: var(--color-surface);
+    border-block: var(--border-width) solid var(--color-border);
+  }
+
+  .finder__header {
+    display: grid;
+    gap: var(--space-2);
+    margin-block-end: var(--space-5);
+    max-width: 60ch;
+  }
+
+  .finder__title,
+  .finder__subtitle {
+    margin: 0;
+  }
+
+  .finder__body {
+    display: grid;
+    gap: var(--space-4);
+  }
+
+  .finder__current {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+    padding: var(--space-3) var(--space-4);
+    background-color: var(--color-accent-surface);
+    border: var(--border-width) solid var(--color-border);
+    border-inline-start-width: 3px;
+    border-inline-start-color: var(--color-accent);
+  }
+
+  .finder__current span {
+    flex: 1;
+  }
+
+  .finder__clear {
+    color: var(--color-primary);
+    font-weight: var(--weight-medium);
+    text-decoration: underline;
+    min-height: var(--target-min);
+  }
+
+  .finder__search-field {
+    position: relative;
+    display: flex;
+    align-items: center;
+  }
+
+  .finder__search-icon {
+    position: absolute;
+    inset-inline-start: var(--space-3);
+    color: var(--color-text-secondary);
+    pointer-events: none;
+  }
+
+  .finder__input {
+    padding-inline-start: var(--space-8);
+  }
+
+  .finder__input::-webkit-search-cancel-button {
+    appearance: none;
+  }
+
+  .finder__tree {
+    display: grid;
+    gap: var(--space-1);
+  }
+
+  .finder__brand {
+    border: var(--border-width) solid var(--color-border);
+    border-radius: var(--radius-control);
+    background-color: var(--color-surface);
+  }
+
+  .finder__brand-summary {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+    min-height: 56px;
+    padding-inline: var(--space-4);
+  }
+
+  .finder__brand-name {
+    flex: 1;
+    font-weight: var(--weight-semibold);
+  }
+
+  .finder__brand-logo {
+    width: 48px;
+    height: 24px;
+    object-fit: contain;
+  }
+
+  .finder__brand[open] .finder__brand-summary {
+    border-block-end: var(--border-width) solid var(--color-border);
+  }
+
+  .finder__brand[open] .finder__brand-summary .icon:last-child {
+    transform: rotate(180deg);
+  }
+
+  .finder__families {
+    display: grid;
+    gap: var(--space-4);
+    padding: var(--space-4);
+  }
+
+  .finder__family-name {
+    margin: 0 0 var(--space-2);
+  }
+
+  .finder__model-list {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    gap: var(--space-1);
+    list-style: none;
+  }
+
+  .finder__model {
+    display: flex;
+    align-items: center;
+    min-height: var(--target-min);
+    padding-inline: var(--space-3);
+    border: var(--border-width) solid transparent;
+    border-radius: var(--radius-control);
+    font-size: var(--text-ui);
+    color: var(--color-ink);
+    text-decoration: none;
+  }
+
+  .finder__model:hover {
+    border-color: var(--color-border-strong);
+    background-color: var(--color-surface-sunken);
+  }
+
+  /* Selecting a device is the one place lime appears as a fill. */
+  .finder__model.is-selected {
+    background-color: var(--color-accent-surface);
+    border-color: var(--color-accent);
+    font-weight: var(--weight-semibold);
+  }
+
+  .finder__chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-2);
+    list-style: none;
+  }
+
+  .finder__all {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-2);
+    min-height: var(--target-min);
+    color: var(--color-primary);
+    font-weight: var(--weight-medium);
+    text-decoration: none;
+  }
+
+  .finder__setup {
+    display: grid;
+    justify-items: center;
+    gap: var(--space-3);
+    padding: var(--space-7) var(--space-4);
+    text-align: center;
+    color: var(--color-text-secondary);
+  }
+
+  .finder--compact .finder__tree {
+    max-height: 420px;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+  }
+{% endstylesheet %}
+
+{% schema %}
+{
+  "name": "t:names.device_finder",
+  "tag": "section",
+  "class": "device-finder-section",
+  "settings": [
+    { "type": "text", "id": "eyebrow", "label": "t:labels.eyebrow" },
+    { "type": "text", "id": "heading", "label": "t:labels.heading" },
+    { "type": "text", "id": "subheading", "label": "t:labels.subheading" },
+    {
+      "type": "checkbox",
+      "id": "compact",
+      "label": "Altezza ridotta",
+      "default": true,
+      "info": "Consigliato in homepage: mantiene visibili i prodotti sotto la sezione."
+    },
+    { "type": "paragraph", "content": "t:info.requires_metaobject" }
+  ],
+  "presets": [
+    {
+      "name": "t:names.device_finder",
+      "category": "t:categories.discovery"
+    }
+  ]
+}
+{% endschema %}

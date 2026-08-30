@@ -1,0 +1,55 @@
+{% doc %}
+  Resolves a specification row key to its translated label.
+
+  WHY A SNIPPET AND WHY A CASE. Translation keys must be STATIC for Theme Check to verify them
+  (`TranslationKeyExists`), so `'specs.' | append: key | t` is not an option — a typo would fail
+  silently in front of a customer. The case below keeps every key literal and verifiable, and
+  living in one snippet means the spec table and the comparison table cannot drift apart.
+
+  @param {string} key - A row key, e.g. `total_output`. See `locales/it.default.json` > `specs`.
+
+  @example
+  {% render 'spec-label', key: 'total_output' %}
+{% enddoc %}
+
+{%- case key -%}
+  {%- when 'total_output' -%}{{ 'specs.total_output' | t }}
+  {%- when 'output_per_port' -%}{{ 'specs.output_per_port' | t }}
+  {%- when 'port_count' -%}{{ 'specs.port_count' | t }}
+  {%- when 'outputs' -%}{{ 'specs.outputs' | t }}
+  {%- when 'input' -%}{{ 'specs.input' | t }}
+  {%- when 'usb_pd' -%}{{ 'specs.usb_pd' | t }}
+  {%- when 'pps' -%}{{ 'specs.pps' | t }}
+  {%- when 'gan' -%}{{ 'specs.gan' | t }}
+  {%- when 'plug_type' -%}{{ 'specs.plug_type' | t }}
+  {%- when 'cable_included' -%}{{ 'specs.cable_included' | t }}
+  {%- when 'connector_a' -%}{{ 'specs.connector_a' | t }}
+  {%- when 'connector_b' -%}{{ 'specs.connector_b' | t }}
+  {%- when 'length' -%}{{ 'specs.length' | t }}
+  {%- when 'max_power' -%}{{ 'specs.max_power' | t }}
+  {%- when 'data_speed' -%}{{ 'specs.data_speed' | t }}
+  {%- when 'material' -%}{{ 'specs.material' | t }}
+  {%- when 'certification' -%}{{ 'specs.certification' | t }}
+  {%- when 'pack_quantity' -%}{{ 'specs.pack_quantity' | t }}
+  {%- when 'capacity' -%}{{ 'specs.capacity' | t }}
+  {%- when 'rated_capacity' -%}{{ 'specs.rated_capacity' | t }}
+  {%- when 'max_output' -%}{{ 'specs.max_output' | t }}
+  {%- when 'ports' -%}{{ 'specs.ports' | t }}
+  {%- when 'wireless_charging' -%}{{ 'specs.wireless_charging' | t }}
+  {%- when 'qi2' -%}{{ 'specs.qi2' | t }}
+  {%- when 'magnetic' -%}{{ 'specs.magnetic' | t }}
+  {%- when 'passthrough' -%}{{ 'specs.passthrough' | t }}
+  {%- when 'protection_level' -%}{{ 'specs.protection_level' | t }}
+  {%- when 'raised_camera' -%}{{ 'specs.raised_camera' | t }}
+  {%- when 'colour' -%}{{ 'specs.colour' | t }}
+  {%- when 'hardness' -%}{{ 'specs.hardness' | t }}
+  {%- when 'privacy' -%}{{ 'specs.privacy' | t }}
+  {%- when 'anti_glare' -%}{{ 'specs.anti_glare' | t }}
+  {%- when 'edge_coverage' -%}{{ 'specs.edge_coverage' | t }}
+  {%- when 'installation_kit' -%}{{ 'specs.installation_kit' | t }}
+  {%- when 'fingerprint_notes' -%}{{ 'specs.fingerprint_notes' | t }}
+  {%- when 'dimensions' -%}{{ 'specs.dimensions' | t }}
+  {%- when 'weight' -%}{{ 'specs.weight' | t }}
+  {%- when 'warranty' -%}{{ 'specs.warranty' | t }}
+  {%- when 'compatibility' -%}{{ 'specs.compatibility' | t }}
+{%- endcase -%}

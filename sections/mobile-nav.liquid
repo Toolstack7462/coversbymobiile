@@ -1,0 +1,159 @@
+{% comment %}
+  Mobile bottom navigation.
+
+  Five destinations, chosen because they are the five things a phone shopper actually does:
+  home, browse, choose a device, saved items, cart.
+
+  It hides itself on the product template, where the sticky add-to-cart bar occupies the same
+  space — two stacked fixed bars would cover content and, worse, obscure a focused element,
+  which WCAG 2.2 prohibits.
+{% endcomment %}
+
+{%- unless request.page_type == 'product' -%}
+  <nav class="mobilenav" aria-label="{{ 'header.utility_navigation' | t }}">
+    <ul class="mobilenav__list" role="list">
+      <li>
+        <a class="mobilenav__item{% if request.page_type == 'index' %} is-current{% endif %}"
+          href="{{ routes.root_url }}"
+          {% if request.page_type == 'index' %}aria-current="page"{% endif %}
+        >
+          {% render 'icon', name: 'store' %}
+          <span class="mobilenav__label">Home</span>
+        </a>
+      </li>
+
+      <li>
+        <a class="mobilenav__item{% if request.page_type == 'collection' %} is-current{% endif %}"
+          href="{{ section.settings.shop_url | default: routes.all_products_collection_url }}"
+          {% if request.page_type == 'collection' %}aria-current="page"{% endif %}
+        >
+          {% render 'icon', name: 'grid' %}
+          <span class="mobilenav__label">Shop</span>
+        </a>
+      </li>
+
+      <li>
+        <a class="mobilenav__item mobilenav__item--device"
+          href="{{ section.settings.device_finder_url | default: '/pages/trova-dispositivo' }}"
+        >
+          {% render 'icon', name: 'device' %}
+          <span class="mobilenav__label">{{ 'device.my_device' | t }}</span>
+        </a>
+      </li>
+
+      {%- if settings.enable_wishlist -%}
+        <li>
+          <a class="mobilenav__item" href="{{ section.settings.wishlist_url | default: '/pages/preferiti' }}">
+            {% render 'icon', name: 'heart' %}
+            <span class="mobilenav__label">{{ 'header.wishlist' | t }}</span>
+            <span class="mobilenav__count" data-wishlist-count hidden></span>
+          </a>
+        </li>
+      {%- endif -%}
+
+      <li>
+        <a class="mobilenav__item" href="{{ routes.cart_url }}" data-cart-open>
+          {% render 'icon', name: 'cart' %}
+          <span class="mobilenav__label">{{ 'header.cart' | t }}</span>
+          <span class="mobilenav__count" data-cart-count {% if cart.item_count == 0 %}hidden{% endif %}>
+            {{- cart.item_count -}}
+          </span>
+        </a>
+      </li>
+    </ul>
+  </nav>
+{%- endunless -%}
+
+{% stylesheet %}
+  .mobilenav {
+    position: fixed;
+    inset-block-end: 0;
+    inset-inline: 0;
+    z-index: var(--z-mobile-nav);
+    background-color: var(--color-surface);
+    border-block-start: var(--border-width) solid var(--color-border);
+    padding-block-end: env(safe-area-inset-bottom);
+  }
+
+  .mobilenav__list {
+    display: grid;
+    grid-auto-flow: column;
+    grid-auto-columns: 1fr;
+    list-style: none;
+  }
+
+  .mobilenav__item {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-half);
+    min-height: 56px;
+    padding-block: var(--space-1);
+    color: var(--color-text-secondary);
+    text-decoration: none;
+  }
+
+  .mobilenav__item.is-current {
+    color: var(--color-ink);
+  }
+
+  /* The current item is marked by colour AND a bar, never colour alone. */
+  .mobilenav__item.is-current::before {
+    content: '';
+    position: absolute;
+    inset-block-start: 0;
+    inset-inline: 25%;
+    height: 2px;
+    background-color: var(--color-primary);
+  }
+
+  .mobilenav__label {
+    font-size: var(--text-caption);
+    line-height: 1.2;
+  }
+
+  .mobilenav__count {
+    position: absolute;
+    inset-block-start: var(--space-1);
+    inset-inline-start: 55%;
+    min-width: 16px;
+    height: 16px;
+    padding-inline: var(--space-half);
+    display: grid;
+    place-items: center;
+    border-radius: var(--radius-chip);
+    background-color: var(--color-primary);
+    color: var(--color-surface);
+    font-size: var(--text-caption);
+    font-weight: var(--weight-bold);
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* Keep page content clear of the fixed bar. */
+  body:has(.mobilenav) {
+    padding-block-end: calc(56px + env(safe-area-inset-bottom));
+  }
+
+  @media (min-width: 750px) {
+    .mobilenav {
+      display: none;
+    }
+
+    body:has(.mobilenav) {
+      padding-block-end: 0;
+    }
+  }
+{% endstylesheet %}
+
+{% schema %}
+{
+  "name": "Navigazione mobile",
+  "settings": [
+    { "type": "url", "id": "shop_url", "label": "Collegamento «Shop»" },
+    { "type": "url", "id": "device_finder_url", "label": "Pagina «Trova il tuo dispositivo»" },
+    { "type": "url", "id": "wishlist_url", "label": "Pagina preferiti" }
+  ]
+}
+{% endschema %}

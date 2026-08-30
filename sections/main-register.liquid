@@ -1,0 +1,85 @@
+{% comment %}
+  Account registration. Optional — guest checkout is always available.
+{% endcomment %}
+
+<div class="account page">
+  <div class="account__panel surface">
+    <div class="account__form-block">
+      <h1 class="text-h2">{{ 'customers.register.title' | t }}</h1>
+
+      {%- form 'create_customer', novalidate: 'novalidate' -%}
+        {%- if form.errors -%}
+          <div class="account__message account__message--error" role="alert">
+            <p class="text-ui">
+              {{- 'forms.error_summary' | t: count: form.errors.size -}}
+            </p>
+            <ul class="account__errors" role="list">
+              {%- for field in form.errors -%}
+                <li class="text-ui">
+                  {{ form.errors.translated_fields[field] }}: {{ form.errors.messages[field] }}
+                </li>
+              {%- endfor -%}
+            </ul>
+          </div>
+        {%- endif -%}
+
+        <div class="field">
+          <label class="field__label" for="register-first">{{ 'customers.register.first_name' | t }}</label>
+          <input class="input" id="register-first" type="text" name="customer[first_name]" autocomplete="given-name">
+        </div>
+
+        <div class="field">
+          <label class="field__label" for="register-last">{{ 'customers.register.last_name' | t }}</label>
+          <input class="input" id="register-last" type="text" name="customer[last_name]" autocomplete="family-name">
+        </div>
+
+        <div class="field">
+          <label class="field__label" for="register-email">{{ 'forms.email' | t }}</label>
+          <input class="input" id="register-email" type="email" name="customer[email]" autocomplete="email" required>
+        </div>
+
+        <div class="field">
+          <label class="field__label" for="register-password">{{ 'customers.login.password' | t }}</label>
+          <input class="input" id="register-password" type="password" name="customer[password]" autocomplete="new-password" required>
+        </div>
+
+        <button class="button button--primary button--full" type="submit">
+          {{ 'customers.register.submit' | t }}
+        </button>
+
+        {%- if settings.privacy_policy_page != blank -%}
+          <p class="text-caption text-secondary">
+            <a href="{{ settings.privacy_policy_page.url }}">{{ 'newsletter.privacy_note' | t }}</a>
+          </p>
+        {%- endif -%}
+      {%- endform -%}
+
+      <div class="account__aside">
+        <p class="account__guest text-ui">
+          {% render 'icon', name: 'info', class: 'icon--sm' %}
+          {{ 'customers.login.guest_note' | t }}
+        </p>
+        <p class="text-ui">
+          {{ 'customers.register.has_account' | t }}
+          <a href="{{ routes.account_login_url }}">{{ 'customers.login.submit' | t }}</a>
+        </p>
+      </div>
+    </div>
+  </div>
+</div>
+
+{% stylesheet %}
+  .account__errors {
+    list-style: none;
+    margin-block-start: var(--space-2);
+    display: grid;
+    gap: var(--space-1);
+  }
+{% endstylesheet %}
+
+{% schema %}
+{
+  "name": "Registrazione",
+  "settings": []
+}
+{% endschema %}

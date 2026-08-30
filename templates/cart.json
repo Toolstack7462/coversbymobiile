@@ -1,0 +1,14 @@
+{
+  "sections": {
+    "main": {
+      "type": "main-cart",
+      "settings": {
+        "show_note": true,
+        "show_dynamic_checkout": true
+      }
+    }
+  },
+  "order": [
+    "main"
+  ]
+}

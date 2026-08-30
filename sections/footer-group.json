@@ -1,0 +1,26 @@
+{
+  "type": "footer",
+  "name": "t:names.footer",
+  "sections": {
+    "footer": {
+      "type": "footer",
+      "blocks": {
+        "menu-shop": {
+          "type": "menu",
+          "settings": { "heading": "Acquista", "menu": "footer-acquista" }
+        },
+        "menu-support": {
+          "type": "menu",
+          "settings": { "heading": "Assistenza", "menu": "footer-assistenza" }
+        },
+        "menu-legal": {
+          "type": "menu",
+          "settings": { "heading": "Informazioni legali", "menu": "footer-legale" }
+        }
+      },
+      "block_order": ["menu-shop", "menu-support", "menu-legal"],
+      "settings": {}
+    }
+  },
+  "order": ["footer"]
+}

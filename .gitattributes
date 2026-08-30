@@ -1,0 +1,10 @@
+# Normalise line endings in the repo; check out native on Windows.
+* text=auto
+
+*.json linguist-language=jsonc
+
+# Binary assets must never be line-ending converted.
+*.woff2 binary
+*.png binary
+*.jpg binary
+*.svg text

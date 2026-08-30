@@ -1,0 +1,164 @@
+{% comment %}
+  The narrow navy bar above the header.
+
+  Only merchant-configured claims appear here. There are no default claims, because a shipping
+  or service promise the merchant has not made is a lie the theme would be telling on their
+  behalf. An unconfigured bar renders nothing at all.
+{% endcomment %}
+
+{%- liquid
+  assign claim_blocks = section.blocks | where: 'type', 'claim'
+  assign has_claims = false
+  if claim_blocks.size > 0
+    assign has_claims = true
+  endif
+-%}
+
+{%- if has_claims or settings.business_whatsapp != blank -%}
+  <div class="utility-bar">
+    <div class="utility-bar__inner page">
+      {%- if has_claims -%}
+        <ul class="utility-bar__claims" role="list">
+          {%- for block in claim_blocks -%}
+            {%- if block.settings.text != blank -%}
+              <li class="utility-bar__claim" {{ block.shopify_attributes }}>
+                {%- if block.settings.icon != 'none' -%}
+                  {% render 'icon', name: block.settings.icon, class: 'icon--sm' %}
+                {%- endif -%}
+                {%- if block.settings.link != blank -%}
+                  <a href="{{ block.settings.link }}">{{ block.settings.text }}</a>
+                {%- else -%}
+                  <span>{{ block.settings.text }}</span>
+                {%- endif -%}
+              </li>
+            {%- endif -%}
+          {%- endfor -%}
+        </ul>
+      {%- endif -%}
+
+      <div class="utility-bar__actions">
+        {%- if settings.business_whatsapp != blank -%}
+          <a
+            class="utility-bar__action"
+            href="https://wa.me/{{ settings.business_whatsapp }}"
+            rel="noopener"
+            target="_blank"
+          >
+            {% render 'icon', name: 'whatsapp', class: 'icon--sm' %}
+            {{ 'store.whatsapp' | t }}
+            <span class="visually-hidden">({{ 'general.accessibility.new_window' | t }})</span>
+          </a>
+        {%- endif -%}
+
+        {%- if settings.store_name != blank -%}
+          <a class="utility-bar__action utility-bar__action--store" href="{{ pages.negozio.url | default: '/pages/negozio' }}">
+            {% render 'icon', name: 'store', class: 'icon--sm' %}
+            {{ 'header.store' | t }}
+          </a>
+        {%- endif -%}
+      </div>
+    </div>
+  </div>
+{%- endif -%}
+
+{% stylesheet %}
+  .utility-bar {
+    background-color: var(--color-ink);
+    color: var(--color-surface);
+    font-size: var(--text-caption);
+    line-height: var(--text-caption-lh);
+  }
+
+  .utility-bar__inner {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-4);
+    min-height: var(--utility-bar-height);
+  }
+
+  .utility-bar__claims {
+    display: flex;
+    align-items: center;
+    gap: var(--space-5);
+    list-style: none;
+    margin: 0;
+    /* On small screens the claims scroll horizontally rather than wrapping the bar to two
+       lines, which would push the header and hurt CLS. */
+    overflow-x: auto;
+    overscroll-behavior-x: contain;
+    scrollbar-width: none;
+  }
+
+  .utility-bar__claims::-webkit-scrollbar {
+    display: none;
+  }
+
+  .utility-bar__claim,
+  .utility-bar__action {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-2);
+    white-space: nowrap;
+    color: inherit;
+    text-decoration: none;
+  }
+
+  .utility-bar__claim a:hover,
+  .utility-bar__action:hover {
+    text-decoration: underline;
+  }
+
+  .utility-bar__actions {
+    display: none;
+    align-items: center;
+    gap: var(--space-5);
+  }
+
+  @media (min-width: 990px) {
+    .utility-bar__actions {
+      display: flex;
+    }
+  }
+{% endstylesheet %}
+
+{% schema %}
+{
+  "name": "t:names.utility_bar",
+  "class": "utility-bar-section",
+  "enabled_on": { "groups": ["header"] },
+  "max_blocks": 4,
+  "settings": [
+    {
+      "type": "paragraph",
+      "content": "Aggiungi solo affermazioni vere e verificabili. Le promesse non mantenute su spedizione o assistenza sono pratiche commerciali scorrette."
+    }
+  ],
+  "blocks": [
+    {
+      "type": "claim",
+      "name": "Informazione",
+      "settings": [
+        { "type": "text", "id": "text", "label": "t:labels.text" },
+        { "type": "url", "id": "link", "label": "t:labels.link" },
+        {
+          "type": "select",
+          "id": "icon",
+          "label": "t:labels.icon",
+          "default": "truck",
+          "options": [
+            { "value": "none", "label": "Nessuna" },
+            { "value": "truck", "label": "Spedizione" },
+            { "value": "store", "label": "Negozio" },
+            { "value": "shield-check", "label": "Pagamenti sicuri" },
+            { "value": "whatsapp", "label": "WhatsApp" },
+            { "value": "refresh", "label": "Resi" },
+            { "value": "package", "label": "Ritiro" }
+          ]
+        }
+      ]
+    }
+  ],
+  "presets": [{ "name": "t:names.utility_bar" }]
+}
+{% endschema %}

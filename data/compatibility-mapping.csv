@@ -1,0 +1,10 @@
+product_handle,product_sku,device_brand,device_family,device_model,compatibility_level,compatibility_notes
+cover-trasparente-antiurto-iphone-16-pro,COV-TR-IP16P,Apple,iPhone Pro,iPhone 16 Pro,exact_fit,
+cover-trasparente-antiurto-iphone-16-pro-max,COV-TR-IP16PM,Apple,iPhone Pro,iPhone 16 Pro Max,exact_fit,
+vetro-temperato-iphone-16-pro,VET-TP-IP16P,Apple,iPhone Pro,iPhone 16 Pro,exact_fit,Compatibile con custodie a bordo sottile
+cover-silicone-galaxy-s25-ultra,COV-SI-GS25U,Samsung,Galaxy S,Galaxy S25 Ultra,exact_fit,
+caricatore-gan-65w-3-porte,CAR-GAN-65W,,,,universal,Verifica la potenza supportata dal tuo dispositivo
+cavo-usb-c-usb-c-2m,CAV-CC-200,,,,universal,Per la ricarica rapida servono dispositivo e caricatore compatibili
+cavo-usb-c-lightning-1m,CAV-CL-100,Apple,iPhone,iPhone 15,compatible,
+power-bank-magsafe-10000,PWB-MAG-10K,Apple,iPhone Pro,iPhone 16 Pro,compatible,Ricarica magnetica; con altri dispositivi usare il cavo
+adattatore-jack-35-usbc,ADP-35-UC,Apple,iPhone Pro,iPhone 16 Pro,adapter_required,

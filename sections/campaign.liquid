@@ -1,0 +1,123 @@
+{% comment %}
+  Editorial campaign banner.
+
+  One image, one message, one destination. Restrained by design: this is the place a template
+  usually grows a gradient, a countdown and three competing buttons.
+
+  No countdown timer exists in this section and none will be added. A fabricated deadline is an
+  unfair commercial practice under EU consumer law, and a real one belongs in a Shopify discount
+  with an end date the customer can verify at checkout.
+{% endcomment %}
+
+{%- if section.settings.image != blank or section.settings.heading != blank -%}
+  <section class="campaign{% if section.settings.reverse %} campaign--reverse{% endif %}">
+    <div class="page">
+      <div class="campaign__inner">
+        {%- if section.settings.image != blank -%}
+          <div class="campaign__media">
+            <div class="media media--cover">
+              <img
+                src="{{ section.settings.image | image_url: width: 1200 }}"
+                srcset="
+                  {{ section.settings.image | image_url: width: 600 }} 600w,
+                  {{ section.settings.image | image_url: width: 1200 }} 1200w
+                "
+                sizes="(min-width: 990px) 55vw, 100vw"
+                alt="{{ section.settings.image.alt | escape }}"
+                width="{{ section.settings.image.width }}"
+                height="{{ section.settings.image.height }}"
+                loading="lazy"
+              >
+            </div>
+          </div>
+        {%- endif -%}
+
+        <div class="campaign__content">
+          {%- if section.settings.eyebrow != blank -%}
+            <p class="eyebrow">{{ section.settings.eyebrow }}</p>
+          {%- endif -%}
+
+          {%- if section.settings.heading != blank -%}
+            <h2 class="text-h2">{{ section.settings.heading }}</h2>
+          {%- endif -%}
+
+          {%- if section.settings.body != blank -%}
+            <div class="rte text-body text-secondary">{{ section.settings.body }}</div>
+          {%- endif -%}
+
+          {%- if section.settings.link != blank and section.settings.link_label != blank -%}
+            <a class="button button--primary campaign__cta" href="{{ section.settings.link }}">
+              {{ section.settings.link_label }}
+            </a>
+          {%- endif -%}
+        </div>
+      </div>
+    </div>
+  </section>
+{%- endif -%}
+
+{% stylesheet %}
+  .campaign {
+    padding-block: var(--space-7);
+  }
+
+  .campaign__inner {
+    display: grid;
+    gap: var(--space-5);
+    align-items: center;
+  }
+
+  .campaign__content {
+    display: grid;
+    gap: var(--space-3);
+    justify-items: start;
+    max-width: 52ch;
+  }
+
+  .campaign__content h2 {
+    margin: 0;
+  }
+
+  .campaign__media .media {
+    --media-ratio: 16 / 10;
+    border-radius: var(--radius-editorial);
+    border: var(--border-width) solid var(--color-border);
+  }
+
+  .campaign__cta {
+    margin-block-start: var(--space-2);
+  }
+
+  @media (min-width: 990px) {
+    .campaign__inner {
+      grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr);
+      gap: var(--space-7);
+    }
+
+    .campaign--reverse .campaign__media {
+      order: 2;
+    }
+  }
+{% endstylesheet %}
+
+{% schema %}
+{
+  "name": "t:names.campaign",
+  "tag": "section",
+  "class": "campaign-section",
+  "settings": [
+    { "type": "text", "id": "eyebrow", "label": "t:labels.eyebrow" },
+    { "type": "text", "id": "heading", "label": "t:labels.heading" },
+    { "type": "richtext", "id": "body", "label": "t:labels.body" },
+    { "type": "image_picker", "id": "image", "label": "t:labels.image" },
+    { "type": "text", "id": "link_label", "label": "t:labels.link_label" },
+    { "type": "url", "id": "link", "label": "t:labels.link" },
+    { "type": "checkbox", "id": "reverse", "label": "t:labels.reverse_layout", "default": false },
+    {
+      "type": "paragraph",
+      "content": "Comunica solo offerte reali e verificabili. Non usare scadenze o conti alla rovescia non veritieri."
+    }
+  ],
+  "presets": [{ "name": "t:names.campaign", "category": "t:categories.editorial" }]
+}
+{% endschema %}

@@ -1,0 +1,121 @@
+{% comment %}
+  Account overview: order history and default address.
+{% endcomment %}
+
+<div class="accountpage page">
+  <header class="accountpage__header">
+    <h1 class="text-h1">{{ 'customers.account.title' | t }}</h1>
+    <a class="button button--secondary button--small" href="{{ routes.account_logout_url }}">
+      {{ 'customers.account.logout' | t }}
+    </a>
+  </header>
+
+  <div class="accountpage__layout">
+    <section class="accountpage__orders">
+      <h2 class="text-h3">{{ 'customers.account.orders' | t }}</h2>
+
+      {%- if customer.orders.size > 0 -%}
+        <div class="scroll-x">
+          <table class="orders">
+            <caption class="visually-hidden">{{ 'customers.account.orders' | t }}</caption>
+            <thead>
+              <tr>
+                <th scope="col">{{ 'customers.order.title' | t: name: '' | strip }}</th>
+                <th scope="col">{{ 'customers.order.date' | t: date: '' | strip }}</th>
+                <th scope="col">{{ 'customers.order.status' | t }}</th>
+                <th scope="col">{{ 'cart.subtotal' | t }}</th>
+              </tr>
+            </thead>
+            <tbody>
+              {%- for order in customer.orders -%}
+                <tr>
+                  <td><a href="{{ order.customer_url }}">{{ order.name }}</a></td>
+                  <td class="tabular">{{ order.created_at | date: '%d/%m/%Y' }}</td>
+                  <td>{{ order.fulfillment_status_label }}</td>
+                  <td class="tabular">{{ order.total_price | money }}</td>
+                </tr>
+              {%- endfor -%}
+            </tbody>
+          </table>
+        </div>
+      {%- else -%}
+        <div class="empty-state surface">
+          {% render 'icon', name: 'package', class: 'icon--xl' %}
+          <p class="empty-state__title text-h3">{{ 'customers.account.no_orders' | t }}</p>
+          <div class="empty-state__actions">
+            <a class="button button--primary" href="{{ routes.all_products_collection_url }}">
+              {{ 'general.actions.continue_shopping' | t }}
+            </a>
+          </div>
+        </div>
+      {%- endif -%}
+    </section>
+
+    <aside class="accountpage__aside surface">
+      <h2 class="text-h3">{{ 'customers.account.addresses' | t }}</h2>
+      {%- if customer.default_address -%}
+        <address class="accountpage__address text-ui">
+          {{ customer.default_address | format_address }}
+        </address>
+      {%- endif -%}
+      <a class="button button--secondary button--full" href="{{ routes.account_addresses_url }}">
+        {{ 'general.actions.edit' | t }}
+      </a>
+    </aside>
+  </div>
+</div>
+
+{% stylesheet %}
+  .accountpage {
+    padding-block: var(--space-6) var(--space-8);
+  }
+
+  .accountpage__header {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-3);
+    margin-block-end: var(--space-5);
+  }
+
+  .accountpage__header h1 {
+    margin: 0;
+  }
+
+  .accountpage__layout {
+    display: grid;
+    gap: var(--space-6);
+    align-items: start;
+  }
+
+  .accountpage__orders h2,
+  .accountpage__aside h2 {
+    margin-block-end: var(--space-3);
+  }
+
+  .accountpage__aside {
+    display: grid;
+    gap: var(--space-3);
+    padding: var(--space-5);
+  }
+
+  .accountpage__address {
+    font-style: normal;
+    color: var(--color-text-secondary);
+  }
+
+  @media (min-width: 990px) {
+    .accountpage__layout {
+      grid-template-columns: minmax(0, 1fr) 320px;
+      gap: var(--space-7);
+    }
+  }
+{% endstylesheet %}
+
+{% schema %}
+{
+  "name": "Account",
+  "settings": []
+}
+{% endschema %}

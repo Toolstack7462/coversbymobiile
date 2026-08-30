@@ -1,0 +1,257 @@
+{% doc %}
+  Renders the compatibility indicator for a product.
+
+  ARCHITECTURE — read before changing.
+
+  Shopify serves fully cached pages, so the selected device can NOT be resolved on the server:
+  visitor A's device would be baked into the HTML served to visitor B. Instead this snippet emits
+  the product's compatibility facts as data attributes and lets `<compat-badge>` (assets/
+  device-context.js) resolve them against the device held in localStorage.
+
+  The server still renders a meaningful default for the device-independent cases (universal, or
+  nothing at all), so the component is useful with JavaScript disabled and produces no layout
+  shift when JS upgrades it.
+
+  Compatibility is read ONLY from metafields. It is never inferred from collection membership,
+  tags or the product title.
+
+  @param {object} product - The product to describe.
+  @param {string} [variant] - 'inline' for a product card line, 'panel' for the PDP block.
+    Defaults to 'inline'.
+  @param {boolean} [show_notes] - Render compatibility notes. Panel only. Defaults to false.
+
+  @example
+  {% render 'compat-badge', product: product %}
+  {% render 'compat-badge', product: product, variant: 'panel', show_notes: true %}
+{% enddoc %}
+
+{%- liquid
+  assign level = product.metafields.custom.compatibility_level.value | default: 'unknown'
+  assign devices = product.metafields.custom.compatible_devices.value
+  assign notes = product.metafields.custom.compatibility_notes.value
+  assign style = variant | default: 'inline'
+
+  # Build a comma-separated list of device-model handles for the client to match against.
+  assign handles = ''
+  if devices != blank
+    for device in devices
+      assign handles = handles | append: device.system.handle | append: ','
+    endfor
+    assign handles = handles | remove_last: ','
+  endif
+
+  # A product with no level AND no device list tells us nothing. Render nothing rather than
+  # guessing — silence beats a false compatibility claim.
+  assign has_data = false
+  if level != 'unknown' or handles != blank
+    assign has_data = true
+  endif
+-%}
+
+{%- if has_data -%}
+  <compat-badge
+    class="compat compat--{{ style }}"
+    data-level="{{ level | escape }}"
+    data-devices="{{ handles | escape }}"
+    {% if notes != blank %}
+      data-notes="{{ notes | strip_html | escape }}"
+    {% endif %}
+  >
+    {%- comment -%}
+      Server-rendered default. Only the device-independent state can be rendered here.
+      Everything device-dependent is filled in by the custom element.
+    {%- endcomment -%}
+    {%- if level == 'universal' -%}
+      <span class="compat__state compat__state--universal" data-compat-state>
+        {% render 'icon', name: 'info' %}
+        <span data-compat-text>
+          {%- if style == 'panel' -%}
+            {{ 'compatibility.universal' | t }}
+          {%- else -%}
+            {{ 'compatibility.universal_short' | t }}
+          {%- endif -%}
+        </span>
+      </span>
+    {%- else -%}
+      {%- comment -%}
+        No device selected yet and the product is device-specific. On the panel we invite the
+        customer to choose a device; on a card we stay silent to avoid repeating a prompt in
+        every grid cell.
+      {%- endcomment -%}
+      <span class="compat__state compat__state--prompt" data-compat-state {% if style != 'panel' %}hidden{% endif %}>
+        {% render 'icon', name: 'device' %}
+        <span data-compat-text>{{ 'compatibility.select_device_prompt' | t }}</span>
+      </span>
+    {%- endif -%}
+
+    {%- if style == 'panel' -%}
+      <a class="compat__action" href="#" data-compat-action hidden>
+        {{ 'compatibility.mismatch_action' | t }}
+      </a>
+
+      {%- if show_notes and notes != blank -%}
+        <p class="compat__notes text-ui text-secondary">{{ notes | strip_html }}</p>
+      {%- endif -%}
+
+      {%- if devices != blank -%}
+        <details class="compat__devices">
+          <summary class="compat__devices-summary text-ui">
+            {{ 'compatibility.all_compatible_devices' | t }}
+            {% render 'icon', name: 'chevron-down', class: 'icon--sm' %}
+          </summary>
+          <ul class="compat__devices-list text-ui" role="list">
+            {%- for device in devices -%}
+              <li>{{ device.name.value | default: device.system.handle }}</li>
+            {%- endfor -%}
+          </ul>
+        </details>
+      {%- endif -%}
+    {%- endif -%}
+  </compat-badge>
+{%- endif -%}
+
+{% stylesheet %}
+  .compat {
+    display: block;
+  }
+
+  .compat__state {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-2);
+    font-size: var(--text-ui);
+    line-height: var(--text-ui-lh);
+    font-weight: var(--weight-medium);
+  }
+
+  .compat__state .icon {
+    flex: none;
+    width: 1rem;
+    height: 1rem;
+  }
+
+  /* Card variant: a single quiet line under the title. It must never truncate the device
+     name — a half-rendered model number is worse than none. */
+  .compat--inline .compat__state {
+    color: var(--color-text-secondary);
+  }
+
+  .compat--inline .compat__state--exact,
+  .compat--inline .compat__state--compatible {
+    color: var(--color-ink);
+  }
+
+  .compat--inline .compat__state--mismatch {
+    color: var(--color-danger-text);
+  }
+
+  /* Panel variant: sits directly beside the buy button on the product page. */
+  .compat--panel {
+    padding: var(--space-4);
+    border: var(--border-width) solid var(--color-border);
+    border-radius: var(--radius-card);
+    background-color: var(--color-surface);
+  }
+
+  .compat--panel .compat__state {
+    font-size: var(--text-body);
+    line-height: var(--text-body-lh);
+    font-weight: var(--weight-semibold);
+    align-items: flex-start;
+  }
+
+  .compat--panel .compat__state .icon {
+    width: 1.25rem;
+    height: 1.25rem;
+    margin-block-start: 2px;
+  }
+
+  /* State treatments. Each pairs a distinct icon with a distinct colour, so state is never
+     communicated by colour alone. Lime is reserved for verified device fit. */
+  .compat--panel:has(.compat__state--exact) {
+    background-color: var(--color-accent-surface);
+    border-color: var(--color-accent);
+    border-inline-start: 3px solid var(--color-accent);
+    border-radius: var(--radius-card) var(--radius-card) var(--radius-card)
+      var(--radius-device-notch);
+  }
+
+  .compat--panel:has(.compat__state--compatible) {
+    background-color: var(--color-accent-surface);
+    border-color: var(--color-border);
+  }
+
+  .compat--panel:has(.compat__state--adapter) {
+    background-color: var(--color-warning-surface);
+    border-color: var(--color-warning);
+  }
+
+  .compat--panel .compat__state--adapter {
+    color: var(--color-warning-text);
+  }
+
+  .compat--panel:has(.compat__state--mismatch) {
+    background-color: var(--color-danger-surface);
+    border-color: var(--color-danger);
+  }
+
+  .compat--panel .compat__state--mismatch {
+    color: var(--color-danger-text);
+  }
+
+  .compat--panel:has(.compat__state--universal),
+  .compat--panel:has(.compat__state--prompt) {
+    background-color: var(--color-surface-sunken);
+  }
+
+  .compat__action {
+    display: inline-flex;
+    align-items: center;
+    min-height: var(--target-min);
+    margin-block-start: var(--space-2);
+    font-size: var(--text-ui);
+    font-weight: var(--weight-semibold);
+    color: var(--color-primary);
+  }
+
+  .compat__notes {
+    margin-block-start: var(--space-3);
+  }
+
+  .compat__devices {
+    margin-block-start: var(--space-3);
+    border-block-start: var(--border-width) solid var(--color-border);
+    padding-block-start: var(--space-3);
+  }
+
+  .compat__devices-summary {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-2);
+    min-height: var(--target-min);
+    font-weight: var(--weight-medium);
+  }
+
+  .compat__devices[open] .compat__devices-summary .icon {
+    transform: rotate(180deg);
+  }
+
+  .compat__devices-list {
+    margin-block-start: var(--space-2);
+    columns: 2;
+    column-gap: var(--space-5);
+    color: var(--color-text-secondary);
+  }
+
+  .compat__devices-list li {
+    break-inside: avoid;
+    padding-block: 2px;
+  }
+
+  @media (max-width: 749px) {
+    .compat__devices-list {
+      columns: 1;
+    }
+  }
+{% endstylesheet %}

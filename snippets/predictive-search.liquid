@@ -1,0 +1,165 @@
+{% doc %}
+  The search field plus its predictive results container.
+
+  PROGRESSIVE ENHANCEMENT: this is a real GET form pointing at the search page. With JavaScript
+  disabled or still loading, typing and pressing Enter performs a normal Shopify search. The
+  <predictive-search> element only adds a suggestion panel on top.
+
+  Results are fetched as rendered HTML via the Section Rendering API
+  (`/search/suggest?section_id=predictive-search`) rather than as JSON. That keeps money
+  formatting, translations and compatibility badges identical to the rest of the store, and
+  avoids building markup with innerHTML on the client.
+
+  @param {string} id - Unique id. There are two instances (desktop and mobile), so every id
+    inside must be derived from this.
+
+  @example
+  {% render 'predictive-search', id: 'header-search-desktop' %}
+{% enddoc %}
+
+<predictive-search class="search-bar" data-search>
+  <form class="search-bar__form" action="{{ routes.search_url }}" method="get" role="search">
+    <label class="visually-hidden" for="{{ id }}-input">{{ 'search.label' | t }}</label>
+
+    <div class="search-bar__field">
+      {% render 'icon', name: 'search', class: 'search-bar__icon' %}
+
+      <input
+        class="search-bar__input"
+        id="{{ id }}-input"
+        type="search"
+        name="q"
+        value="{{ search.terms | escape }}"
+        placeholder="{{ 'search.placeholder' | t }}"
+        autocomplete="off"
+        autocorrect="off"
+        spellcheck="false"
+        role="combobox"
+        aria-expanded="false"
+        aria-controls="{{ id }}-results"
+        aria-autocomplete="list"
+        data-search-input
+      >
+
+      <input type="hidden" name="options[prefix]" value="last">
+
+      <button
+        class="search-bar__clear icon-button"
+        type="button"
+        hidden
+        data-search-clear
+      >
+        {% render 'icon', name: 'close', class: 'icon--sm' %}
+        <span class="visually-hidden">{{ 'search.clear' | t }}</span>
+      </button>
+
+      <button class="search-bar__submit" type="submit">
+        <span class="visually-hidden">{{ 'search.submit' | t }}</span>
+        {% render 'icon', name: 'arrow-right', class: 'icon--sm' %}
+      </button>
+    </div>
+
+    <div
+      class="search-bar__results"
+      id="{{ id }}-results"
+      role="listbox"
+      tabindex="-1"
+      hidden
+      data-search-results
+    ></div>
+  </form>
+</predictive-search>
+
+{% stylesheet %}
+  .search-bar {
+    position: relative;
+    display: block;
+  }
+
+  .search-bar__field {
+    position: relative;
+    display: flex;
+    align-items: center;
+  }
+
+  .search-bar__icon {
+    position: absolute;
+    inset-inline-start: var(--space-3);
+    color: var(--color-text-secondary);
+    pointer-events: none;
+  }
+
+  /* Search is deliberately one of the most prominent controls in the header: a full-width
+     white field with a firm border, not an icon that expands on click. */
+  .search-bar__input {
+    width: 100%;
+    min-height: var(--control-height);
+    padding-inline: var(--space-8) var(--space-8);
+    background-color: var(--color-surface);
+    border: var(--border-width) solid var(--color-border-strong);
+    border-radius: var(--radius-control);
+    font-size: var(--text-body);
+    color: var(--color-ink);
+  }
+
+  .search-bar__input::placeholder {
+    color: var(--color-text-secondary);
+  }
+
+  .search-bar__input:hover {
+    border-color: var(--color-ink-60);
+  }
+
+  .search-bar__input:focus-visible {
+    border-color: var(--color-primary);
+  }
+
+  /* Remove the native clear affordance; we provide our own with a proper accessible name. */
+  .search-bar__input::-webkit-search-cancel-button {
+    appearance: none;
+  }
+
+  .search-bar__clear {
+    position: absolute;
+    inset-inline-end: calc(var(--space-8) - var(--space-2));
+  }
+
+  .search-bar__submit {
+    position: absolute;
+    inset-inline-end: var(--space-2);
+    display: grid;
+    place-items: center;
+    width: 36px;
+    height: 36px;
+    border-radius: calc(var(--radius-control) - 2px);
+    background-color: var(--color-primary);
+    color: var(--color-surface);
+  }
+
+  .search-bar__submit:hover {
+    background-color: var(--color-primary-hover);
+  }
+
+  .search-bar__results:not([hidden]) {
+    position: absolute;
+    inset-block-start: calc(100% + var(--space-2));
+    inset-inline: 0;
+    z-index: var(--z-drawer);
+    max-height: min(70vh, 560px);
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    background-color: var(--color-surface);
+    border: var(--border-width) solid var(--color-border);
+    border-radius: var(--radius-card);
+    box-shadow: var(--shadow-menu);
+  }
+
+  @media (max-width: 989px) {
+    .search-bar__results:not([hidden]) {
+      position: fixed;
+      inset-block-start: auto;
+      inset-inline: var(--gutter);
+      max-height: 60vh;
+    }
+  }
+{% endstylesheet %}

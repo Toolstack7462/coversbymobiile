@@ -1,0 +1,241 @@
+{% doc %}
+  Category-specific technical specifications.
+
+  A charger and a case have almost nothing in common, so a single generic spec table would be
+  mostly empty rows. This snippet reads `custom.accessory_type` and renders only the rows that
+  matter for that category — and within that, only the rows the merchant has actually filled in.
+
+  An empty field renders nothing. A spec table full of blanks or "N/A" reads as an unfinished
+  catalogue and destroys the technical credibility this store depends on.
+
+  Every value is merchant data. Nothing here is inferred, estimated or defaulted.
+
+  Row LABELS are translation keys resolved by `snippets/spec-label.liquid`, so the spec table is
+  as translatable as the rest of the store. Row VALUES are merchant data and are shown as
+  entered.
+
+  @param {object} product - The product.
+
+  @example
+  {% render 'product-specs', product: product %}
+{% enddoc %}
+
+{%- liquid
+  assign m = product.metafields.custom
+  assign type = m.accessory_type.value | default: '' | downcase
+
+  # Build "label|value" rows for the relevant category, skipping anything unset.
+  assign rows = ''
+
+  case type
+    when 'charger', 'caricatore'
+      if m.wattage_w.value != blank
+        assign rows = rows | append: 'total_output§' | append: m.wattage_w.value | append: ' W‖'
+      endif
+      if m.output_per_port.value != blank
+        assign rows = rows | append: 'output_per_port§' | append: m.output_per_port.value | append: '‖'
+      endif
+      if m.port_count.value != blank
+        assign rows = rows | append: 'port_count§' | append: m.port_count.value | append: '‖'
+      endif
+      if m.connector_output.value != blank
+        assign rows = rows | append: 'outputs§' | append: m.connector_output.value | append: '‖'
+      endif
+      if m.connector_input.value != blank
+        assign rows = rows | append: 'input§' | append: m.connector_input.value | append: '‖'
+      endif
+      if m.usb_pd.value != blank
+        assign rows = rows | append: 'usb_pd§' | append: m.usb_pd.value | append: '‖'
+      endif
+      if m.pps_supported.value != blank
+        assign rows = rows | append: 'pps§' | append: m.pps_supported.value | append: '‖'
+      endif
+      if m.gan.value != blank
+        assign rows = rows | append: 'gan§' | append: m.gan.value | append: '‖'
+      endif
+      if m.plug_type.value != blank
+        assign rows = rows | append: 'plug_type§' | append: m.plug_type.value | append: '‖'
+      endif
+      if m.cable_included.value != blank
+        assign rows = rows | append: 'cable_included§' | append: m.cable_included.value | append: '‖'
+      endif
+
+    when 'cable', 'cavo'
+      if m.connector_input.value != blank
+        assign rows = rows | append: 'connector_a§' | append: m.connector_input.value | append: '‖'
+      endif
+      if m.connector_output.value != blank
+        assign rows = rows | append: 'connector_b§' | append: m.connector_output.value | append: '‖'
+      endif
+      if m.cable_length.value != blank
+        assign rows = rows | append: 'length§' | append: m.cable_length.value | append: '‖'
+      endif
+      if m.wattage_w.value != blank
+        assign rows = rows | append: 'max_power§' | append: m.wattage_w.value | append: ' W‖'
+      endif
+      if m.data_speed.value != blank
+        assign rows = rows | append: 'data_speed§' | append: m.data_speed.value | append: '‖'
+      endif
+      if m.material.value != blank
+        assign rows = rows | append: 'material§' | append: m.material.value | append: '‖'
+      endif
+      if m.certification.value != blank
+        assign rows = rows | append: 'certification§' | append: m.certification.value | append: '‖'
+      endif
+      if m.pack_quantity.value != blank
+        assign rows = rows | append: 'pack_quantity§' | append: m.pack_quantity.value | append: '‖'
+      endif
+
+    when 'powerbank', 'power_bank', 'power bank'
+      if m.capacity_mah.value != blank
+        assign rows = rows | append: 'capacity§' | append: m.capacity_mah.value | append: ' mAh‖'
+      endif
+      if m.rated_capacity_mah.value != blank
+        assign rows = rows | append: 'rated_capacity§' | append: m.rated_capacity_mah.value | append: ' mAh‖'
+      endif
+      if m.connector_input.value != blank
+        assign rows = rows | append: 'input§' | append: m.connector_input.value | append: '‖'
+      endif
+      if m.wattage_w.value != blank
+        assign rows = rows | append: 'max_output§' | append: m.wattage_w.value | append: ' W‖'
+      endif
+      if m.port_count.value != blank
+        assign rows = rows | append: 'ports§' | append: m.port_count.value | append: '‖'
+      endif
+      if m.wireless_charging.value != blank
+        assign rows = rows | append: 'wireless_charging§' | append: m.wireless_charging.value | append: '‖'
+      endif
+      if m.qi2_certified.value != blank
+        assign rows = rows | append: 'qi2§' | append: m.qi2_certified.value | append: '‖'
+      endif
+      if m.magsafe_compatible.value != blank
+        assign rows = rows | append: 'magnetic§' | append: m.magsafe_compatible.value | append: '‖'
+      endif
+      if m.passthrough.value != blank
+        assign rows = rows | append: 'passthrough§' | append: m.passthrough.value | append: '‖'
+      endif
+
+    when 'case', 'cover'
+      if m.material.value != blank
+        assign rows = rows | append: 'material§' | append: m.material.value | append: '‖'
+      endif
+      if m.protection_level.value != blank
+        assign rows = rows | append: 'protection_level§' | append: m.protection_level.value | append: '‖'
+      endif
+      if m.raised_camera_edge.value != blank
+        assign rows = rows | append: 'raised_camera§' | append: m.raised_camera_edge.value | append: '‖'
+      endif
+      if m.magsafe_compatible.value != blank
+        assign rows = rows | append: 'magnetic§' | append: m.magsafe_compatible.value | append: '‖'
+      endif
+      if m.wireless_charging.value != blank
+        assign rows = rows | append: 'wireless_charging§' | append: m.wireless_charging.value | append: '‖'
+      endif
+      if m.colour_family.value != blank
+        assign rows = rows | append: 'colour§' | append: m.colour_family.value | append: '‖'
+      endif
+
+    when 'screen_protector', 'vetro', 'pellicola'
+      if m.material.value != blank
+        assign rows = rows | append: 'material§' | append: m.material.value | append: '‖'
+      endif
+      if m.hardness.value != blank
+        assign rows = rows | append: 'hardness§' | append: m.hardness.value | append: '‖'
+      endif
+      if m.privacy_filter.value != blank
+        assign rows = rows | append: 'privacy§' | append: m.privacy_filter.value | append: '‖'
+      endif
+      if m.anti_glare.value != blank
+        assign rows = rows | append: 'anti_glare§' | append: m.anti_glare.value | append: '‖'
+      endif
+      if m.edge_coverage.value != blank
+        assign rows = rows | append: 'edge_coverage§' | append: m.edge_coverage.value | append: '‖'
+      endif
+      if m.installation_kit.value != blank
+        assign rows = rows | append: 'installation_kit§' | append: m.installation_kit.value | append: '‖'
+      endif
+      if m.fingerprint_sensor_notes.value != blank
+        assign rows = rows | append: 'fingerprint_notes§' | append: m.fingerprint_sensor_notes.value | append: '‖'
+      endif
+  endcase
+
+  # Rows shared by every category.
+  if m.dimensions.value != blank
+    assign rows = rows | append: 'dimensions§' | append: m.dimensions.value | append: '‖'
+  endif
+  if m.weight_g.value != blank
+    assign rows = rows | append: 'weight§' | append: m.weight_g.value | append: ' g‖'
+  endif
+  if m.warranty_information.value != blank
+    assign rows = rows | append: 'warranty§' | append: m.warranty_information.value | append: '‖'
+  endif
+
+  assign row_list = rows | split: '‖'
+-%}
+
+{%- if row_list.size > 0 -%}
+  <details class="accordion" open>
+    <summary class="accordion__summary">
+      <span class="text-h3">{{ 'products.specifications' | t }}</span>
+      {% render 'icon', name: 'chevron-down', class: 'accordion__chevron' %}
+    </summary>
+
+    <div class="accordion__body">
+      {%- comment -%}
+        A wide spec table scrolls inside its own container rather than pushing the page,
+        which is the difference between a usable and an unusable mobile spec sheet.
+      {%- endcomment -%}
+      <div class="scroll-x">
+        <table class="specs">
+          <caption class="visually-hidden">
+            {{ 'products.specifications' | t }} — {{ product.title }}
+          </caption>
+          <tbody>
+            {%- for row in row_list -%}
+              {%- assign parts = row | split: '§' -%}
+              {%- if parts.size == 2 -%}
+                <tr>
+                  <th scope="row">{% render 'spec-label', key: parts[0] %}</th>
+                  <td class="tabular">{{ parts[1] }}</td>
+                </tr>
+              {%- endif -%}
+            {%- endfor -%}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </details>
+{%- endif -%}
+
+{% stylesheet %}
+  .specs {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: var(--text-ui);
+    line-height: var(--text-ui-lh);
+  }
+
+  .specs th,
+  .specs td {
+    padding: var(--space-3) var(--space-2);
+    text-align: start;
+    vertical-align: top;
+    border-block-end: var(--border-width) solid var(--color-border);
+  }
+
+  .specs th {
+    width: 45%;
+    font-weight: var(--weight-medium);
+    color: var(--color-text-secondary);
+  }
+
+  .specs td {
+    color: var(--color-ink);
+    font-weight: var(--weight-medium);
+  }
+
+  .specs tr:last-child th,
+  .specs tr:last-child td {
+    border-block-end: 0;
+  }
+{% endstylesheet %}

@@ -1,0 +1,290 @@
+[
+  {
+    "name": "theme_info",
+    "theme_name": "Italian Tech Atelier",
+    "theme_version": "1.0.0",
+    "theme_author": "Italian Tech Atelier",
+    "theme_documentation_url": "https://help.shopify.com/manual/online-store/themes",
+    "theme_support_url": "https://support.shopify.com/"
+  },
+
+  {
+    "name": "t:general.brand",
+    "settings": [
+      {
+        "type": "image_picker",
+        "id": "logo",
+        "label": "t:labels.logo"
+      },
+      {
+        "type": "range",
+        "id": "logo_width",
+        "min": 80,
+        "max": 240,
+        "step": 4,
+        "unit": "px",
+        "label": "t:labels.logo_width",
+        "default": 140
+      },
+      {
+        "type": "text",
+        "id": "tagline",
+        "label": "Tagline",
+        "info": "t:info.no_fake_data"
+      }
+    ]
+  },
+
+  {
+    "name": "t:general.typography",
+    "settings": [
+      {
+        "type": "checkbox",
+        "id": "font_self_hosted",
+        "label": "Usa i caratteri Manrope e Inter inclusi nel tema",
+        "default": true,
+        "info": "Manrope e Inter sono distribuiti con licenza SIL Open Font License 1.1 e sono inclusi nel tema. Disattivando questa opzione il tema usa i caratteri di sistema."
+      }
+    ]
+  },
+
+  {
+    "name": "t:general.colors",
+    "settings": [
+      {
+        "type": "paragraph",
+        "content": "Questi colori definiscono l'identita del tema. Modificali solo se il marchio cambia: le combinazioni predefinite sono state verificate per il contrasto WCAG 2.2 AA."
+      },
+      { "type": "color", "id": "color_ink", "label": "Blu notte", "default": "#0B1220" },
+      {
+        "type": "color",
+        "id": "color_primary",
+        "label": "Blu cobalto (azione principale)",
+        "default": "#2457FF"
+      },
+      {
+        "type": "color",
+        "id": "color_primary_hover",
+        "label": "Blu cobalto (passaggio del mouse)",
+        "default": "#1743D3"
+      },
+      {
+        "type": "color",
+        "id": "color_accent",
+        "label": "Verde lime (contesto dispositivo)",
+        "default": "#B9F227",
+        "info": "Usato solo per il dispositivo selezionato e la compatibilita verificata. Non ha contrasto sufficiente per il testo piccolo."
+      },
+      { "type": "color", "id": "color_background", "label": "Sfondo porcellana", "default": "#F7F8F5" },
+      { "type": "color", "id": "color_surface", "label": "Superficie", "default": "#FFFFFF" },
+      { "type": "color", "id": "color_text_secondary", "label": "Testo secondario", "default": "#667085" },
+      { "type": "color", "id": "color_border", "label": "Bordo", "default": "#DDE3EA" },
+      { "type": "color", "id": "color_success", "label": "Disponibilita e conferme", "default": "#15845A" },
+      { "type": "color", "id": "color_danger", "label": "Errori e offerte reali", "default": "#D92D20" },
+      { "type": "color", "id": "color_warning", "label": "Avvisi", "default": "#B54708" }
+    ]
+  },
+
+  {
+    "name": "t:general.layout",
+    "settings": [
+      {
+        "type": "range",
+        "id": "page_width",
+        "min": 1200,
+        "max": 1600,
+        "step": 20,
+        "unit": "px",
+        "label": "t:labels.page_width",
+        "default": 1440
+      },
+      {
+        "type": "checkbox",
+        "id": "sticky_header",
+        "label": "t:labels.sticky_header",
+        "default": true
+      },
+      {
+        "type": "checkbox",
+        "id": "enable_mobile_nav",
+        "label": "t:labels.enable_mobile_nav",
+        "default": true,
+        "info": "La barra viene nascosta automaticamente nella scheda prodotto quando e attiva la barra di acquisto fissa."
+      }
+    ]
+  },
+
+  {
+    "name": "t:general.business",
+    "settings": [
+      {
+        "type": "paragraph",
+        "content": "Dati legali dell'attivita. Vengono mostrati nel pie di pagina e nelle pagine legali. Lascia vuoto cio che non e verificato: i campi vuoti non vengono mostrati e non generano dati strutturati."
+      },
+      { "type": "text", "id": "business_legal_name", "label": "Ragione sociale" },
+      { "type": "text", "id": "business_vat", "label": "P.IVA" },
+      { "type": "text", "id": "business_registration", "label": "REA / dati di registrazione" },
+      { "type": "text", "id": "business_email", "label": "Email" },
+      { "type": "text", "id": "business_phone", "label": "Telefono" },
+      {
+        "type": "text",
+        "id": "business_whatsapp",
+        "label": "WhatsApp",
+        "info": "Numero in formato internazionale senza spazi, ad esempio 39XXXXXXXXXX."
+      },
+      { "type": "textarea", "id": "business_return_address", "label": "Indirizzo per i resi" },
+      {
+        "type": "text",
+        "id": "business_dispute_url",
+        "label": "Piattaforma di risoluzione delle controversie (URL)"
+      }
+    ]
+  },
+
+  {
+    "name": "t:general.store",
+    "settings": [
+      {
+        "type": "paragraph",
+        "content": "Informazioni del negozio fisico. Usate nella pagina negozio, nel pie di pagina e nei dati strutturati LocalBusiness. I dati strutturati vengono generati solo se nome, indirizzo, citta e telefono sono compilati."
+      },
+      { "type": "text", "id": "store_name", "label": "Nome del negozio" },
+      { "type": "text", "id": "store_street", "label": "Via e numero civico" },
+      { "type": "text", "id": "store_postcode", "label": "CAP" },
+      { "type": "text", "id": "store_city", "label": "Citta" },
+      { "type": "text", "id": "store_province", "label": "Provincia" },
+      {
+        "type": "textarea",
+        "id": "store_hours_display",
+        "label": "Orari di apertura (testo mostrato)",
+        "info": "Una riga per giorno, ad esempio: Lunedi-Venerdi 09:30-13:00, 15:30-19:30"
+      },
+      {
+        "type": "text",
+        "id": "store_hours_schema",
+        "label": "Orari di apertura (formato dati strutturati)",
+        "info": "Formato schema.org, ad esempio: Mo-Fr 09:30-13:00. Lascia vuoto se non sei sicuro: verra semplicemente omesso."
+      },
+      { "type": "text", "id": "store_latitude", "label": "Latitudine" },
+      { "type": "text", "id": "store_longitude", "label": "Longitudine" },
+      { "type": "url", "id": "store_directions_url", "label": "Collegamento alle indicazioni stradali" },
+      {
+        "type": "image_picker",
+        "id": "store_map_image",
+        "label": "Anteprima statica della mappa",
+        "info": "Immagine mostrata al posto della mappa interattiva finche il cliente non acconsente ai cookie di terze parti."
+      },
+      {
+        "type": "url",
+        "id": "store_map_embed_url",
+        "label": "URL della mappa interattiva",
+        "info": "Deve essere un indirizzo https. Caricata solo dopo il consenso ai cookie di terze parti."
+      },
+      { "type": "textarea", "id": "store_accessibility", "label": "Informazioni sull'accessibilita" },
+      { "type": "textarea", "id": "store_parking", "label": "Parcheggio e trasporti" }
+    ]
+  },
+
+  {
+    "name": "t:general.commerce",
+    "settings": [
+      {
+        "type": "text",
+        "id": "free_shipping_threshold",
+        "label": "t:labels.free_shipping_threshold",
+        "info": "Importo in centesimi, ad esempio 4900 per 49,00 euro. Lascia vuoto per non mostrare la barra. Compila solo se la soglia e realmente attiva nelle impostazioni di spedizione."
+      },
+      {
+        "type": "checkbox",
+        "id": "show_free_shipping_bar",
+        "label": "t:labels.show_free_shipping_bar",
+        "default": false
+      },
+      {
+        "type": "text",
+        "id": "pickup_processing_time",
+        "label": "Tempo di preparazione per il ritiro",
+        "info": "Ad esempio: entro 2 ore lavorative. Mostrato solo se compilato."
+      },
+      {
+        "type": "checkbox",
+        "id": "show_low_stock",
+        "label": "Mostra l'avviso di scorte limitate",
+        "default": false,
+        "info": "Si basa sull'inventario reale di Shopify e sulla soglia indicata sotto. Non mostrare mai avvisi non veritieri."
+      },
+      {
+        "type": "range",
+        "id": "low_stock_threshold",
+        "min": 1,
+        "max": 20,
+        "step": 1,
+        "label": "Soglia scorte limitate",
+        "default": 3
+      },
+      {
+        "type": "checkbox",
+        "id": "show_inventory_quantity",
+        "label": "Mostra la quantita esatta disponibile",
+        "default": false,
+        "info": "Disattivato per impostazione predefinita: normalmente le quantita di magazzino non vanno esposte."
+      },
+      {
+        "type": "checkbox",
+        "id": "enable_wishlist",
+        "label": "Attiva i preferiti",
+        "default": true,
+        "info": "t:info.local_storage"
+      },
+      {
+        "type": "checkbox",
+        "id": "enable_compare",
+        "label": "Attiva il confronto prodotti",
+        "default": true,
+        "info": "t:info.local_storage"
+      }
+    ]
+  },
+
+  {
+    "name": "t:general.social",
+    "settings": [
+      { "type": "url", "id": "social_instagram", "label": "Instagram" },
+      { "type": "url", "id": "social_facebook", "label": "Facebook" },
+      { "type": "url", "id": "social_tiktok", "label": "TikTok" },
+      { "type": "url", "id": "social_youtube", "label": "YouTube" }
+    ]
+  },
+
+  {
+    "name": "t:general.privacy",
+    "settings": [
+      {
+        "type": "checkbox",
+        "id": "enable_consent_banner",
+        "label": "Mostra il banner di consenso ai cookie",
+        "default": true,
+        "info": "Usa le API Customer Privacy di Shopify. Prima del consenso non vengono attivati cookie di analisi o marketing."
+      },
+      { "type": "page", "id": "privacy_policy_page", "label": "Pagina informativa privacy" },
+      { "type": "page", "id": "cookie_policy_page", "label": "Pagina cookie policy" },
+      { "type": "page", "id": "terms_page", "label": "Pagina termini e condizioni" },
+      { "type": "page", "id": "shipping_policy_page", "label": "Pagina spedizioni" },
+      { "type": "page", "id": "returns_policy_page", "label": "Pagina resi e recesso" },
+      { "type": "page", "id": "legal_guarantee_page", "label": "Pagina garanzia legale" },
+      { "type": "page", "id": "legal_notice_page", "label": "Note legali" },
+      { "type": "page", "id": "accessibility_page", "label": "Dichiarazione di accessibilita" }
+    ]
+  },
+
+  {
+    "name": "t:general.device",
+    "settings": [
+      {
+        "type": "paragraph",
+        "content": "La ricerca per dispositivo usa i metaoggetti configurati in Impostazioni > Contenuti personalizzati. Consulta docs/device-management-guide.md."
+      },
+      { "type": "page", "id": "device_finder_help_page", "label": "Pagina di aiuto sulla compatibilita" }
+    ]
+  }
+]

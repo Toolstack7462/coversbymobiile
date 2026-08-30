@@ -1,0 +1,7 @@
+node_modules/
+tests/harness/
+test-results/
+playwright-report/
+package-lock.json
+config/settings_data.json
+sections/*-group.json

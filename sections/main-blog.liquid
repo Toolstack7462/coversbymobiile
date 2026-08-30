@@ -1,0 +1,113 @@
+{% comment %}
+  Guides index.
+
+  Editorial exists here to help someone choose — "which power bank", "MagSafe vs Qi2" — not to
+  farm keywords. Few, genuinely useful guides beat many thin ones, and thin mass-generated
+  articles actively harm a small store's search standing.
+{% endcomment %}
+
+<div class="bloglist page">
+  {% render 'breadcrumbs' %}
+
+  <header class="bloglist__header">
+    <h1 class="text-h1">{{ blog.title }}</h1>
+    {%- if section.settings.intro != blank -%}
+      <p class="text-body text-secondary text-measure">{{ section.settings.intro }}</p>
+    {%- endif -%}
+  </header>
+
+  {%- paginate blog.articles by section.settings.posts_per_page -%}
+    {%- if blog.articles.size > 0 -%}
+      {%- comment -%}
+        Track whether the eager hint has actually been used. Keying it on `forloop.first`
+        alone would lose it entirely when the first article has no image.
+      {%- endcomment -%}
+      {%- assign eager_used = false -%}
+      <ul class="bloglist__grid" role="list">
+        {%- for article in blog.articles -%}
+          <li>
+            <a class="post" href="{{ article.url }}">
+              {%- if article.image -%}
+                <div class="media media--cover post__media">
+                  <img
+                    src="{{ article.image | image_url: width: 800 }}"
+                    srcset="
+                      {{ article.image | image_url: width: 400 }} 400w,
+                      {{ article.image | image_url: width: 800 }} 800w
+                    "
+                    sizes="(min-width: 990px) 30vw, 90vw"
+                    alt="{{ article.image.alt | default: article.title | escape }}"
+                    width="{{ article.image.width }}"
+                    height="{{ article.image.height }}"
+                    {% if eager_used == false %}loading="eager" fetchpriority="high"{% else %}loading="lazy"{% endif %}
+                  >
+                  {%- assign eager_used = true -%}
+                </div>
+              {%- endif -%}
+
+              <div class="post__body">
+                <span class="eyebrow">
+                  {%- assign published = article.published_at | date: '%d/%m/%Y' -%}
+                  {{- 'blog.published_on' | t: date: published -}}
+                </span>
+                <h2 class="post__title text-h3">{{ article.title }}</h2>
+                {%- if article.excerpt_or_content != blank -%}
+                  <p class="post__excerpt text-ui text-secondary">
+                    {{- article.excerpt_or_content | strip_html | truncate: 140 -}}
+                  </p>
+                {%- endif -%}
+                <span class="post__more text-ui">
+                  {{ 'blog.read_more' | t }}
+                  {% render 'icon', name: 'arrow-right', class: 'icon--sm' %}
+                </span>
+              </div>
+            </a>
+          </li>
+        {%- endfor -%}
+      </ul>
+
+      {%- if paginate.pages > 1 -%}
+        {% render 'pagination', paginate: paginate %}
+      {%- endif -%}
+    {%- else -%}
+      <div class="empty-state surface">
+        {% render 'icon', name: 'package', class: 'icon--xl' %}
+        <p class="empty-state__title text-h3">{{ 'collections.empty_title' | t }}</p>
+      </div>
+    {%- endif -%}
+  {%- endpaginate -%}
+</div>
+
+{% stylesheet %}
+  .bloglist {
+    padding-block: var(--space-5) var(--space-8);
+  }
+
+  .bloglist__header {
+    display: grid;
+    gap: var(--space-2);
+    margin-block-end: var(--space-6);
+  }
+
+  .bloglist__header h1 {
+    margin: 0;
+  }
+{% endstylesheet %}
+
+{% schema %}
+{
+  "name": "t:names.main_blog",
+  "settings": [
+    { "type": "richtext", "id": "intro", "label": "t:labels.body" },
+    {
+      "type": "range",
+      "id": "posts_per_page",
+      "min": 6,
+      "max": 24,
+      "step": 3,
+      "label": "t:labels.products_to_show",
+      "default": 12
+    }
+  ]
+}
+{% endschema %}

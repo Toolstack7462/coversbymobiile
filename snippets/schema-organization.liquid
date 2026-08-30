@@ -1,0 +1,146 @@
+{% doc %}
+  Emits Organization, WebSite/SearchAction and LocalBusiness structured data.
+
+  INTEGRITY RULE: every block is gated on the underlying theme settings being non-blank. If the
+  merchant has not configured an address, no LocalBusiness is emitted — a plausible-looking but
+  invented address would send a real customer to the wrong door, and fabricated structured data
+  risks a manual action.
+
+  Product schema is NOT emitted here. Shopify already provides `{{ product | structured_data }}`
+  and duplicating it produces conflicting entities.
+
+  @example
+  {% render 'schema-organization' %}
+{% enddoc %}
+
+{%- liquid
+  assign org_name = settings.business_legal_name | default: shop.name
+
+  # LocalBusiness requires a real, complete postal address plus a way to contact the shop.
+  # Anything less and we stay silent.
+  assign has_address = false
+  if settings.store_street != blank and settings.store_city != blank and settings.store_postcode != blank
+    assign has_address = true
+  endif
+
+  assign has_local_business = false
+  if has_address and settings.store_name != blank and settings.business_phone != blank
+    assign has_local_business = true
+  endif
+
+  assign social_links = ''
+  if settings.social_instagram != blank
+    assign social_links = social_links | append: settings.social_instagram | append: ','
+  endif
+  if settings.social_facebook != blank
+    assign social_links = social_links | append: settings.social_facebook | append: ','
+  endif
+  if settings.social_tiktok != blank
+    assign social_links = social_links | append: settings.social_tiktok | append: ','
+  endif
+  if settings.social_youtube != blank
+    assign social_links = social_links | append: settings.social_youtube | append: ','
+  endif
+  assign social_list = social_links | split: ','
+-%}
+
+{%- capture organization_schema -%}
+  {
+    "@context": "https://schema.org",
+    "@type": "Organization",
+    "name": {{ org_name | json }},
+    "url": {{ shop.url | json }}
+    {%- if settings.logo != blank -%}
+      , "logo": {{ settings.logo | image_url: width: 512 | prepend: 'https:' | json }}
+    {%- endif -%}
+    {%- if settings.business_email != blank or settings.business_phone != blank -%}
+      , "contactPoint": {
+        "@type": "ContactPoint",
+        "contactType": "customer support"
+        {%- if settings.business_email != blank %}, "email": {{ settings.business_email | json }}{% endif -%}
+        {%- if settings.business_phone != blank %}, "telephone": {{ settings.business_phone | json }}{% endif -%}
+        , "areaServed": "IT"
+        , "availableLanguage": ["it", "en"]
+      }
+    {%- endif -%}
+    {%- if settings.business_vat != blank -%}
+      , "vatID": {{ settings.business_vat | json }}
+    {%- endif -%}
+    {%- if social_list.size > 0 -%}
+      , "sameAs": [
+        {%- for link in social_list -%}
+          {{ link | json }}{% unless forloop.last %}, {% endunless %}
+        {%- endfor -%}
+      ]
+    {%- endif -%}
+  }
+{%- endcapture -%}
+
+<script type="application/ld+json">
+  {{ organization_schema }}
+</script>
+
+{%- if request.page_type == 'index' -%}
+  <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "WebSite",
+      "name": {{ shop.name | json }},
+      "url": {{ shop.url | json }},
+      "inLanguage": {{ request.locale.iso_code | json }},
+      "potentialAction": {
+        "@type": "SearchAction",
+        "target": {
+          "@type": "EntryPoint",
+          "urlTemplate": "{{ shop.url }}{{ routes.search_url }}?q={search_term_string}"
+        },
+        "query-input": "required name=search_term_string"
+      }
+    }
+  </script>
+{%- endif -%}
+
+{%- if has_local_business -%}
+  {%- capture local_business_schema -%}
+    {
+      "@context": "https://schema.org",
+      "@type": "Store",
+      "name": {{ settings.store_name | json }},
+      "url": {{ shop.url | json }},
+      "telephone": {{ settings.business_phone | json }},
+      {%- if settings.business_email != blank -%}
+        "email": {{ settings.business_email | json }},
+      {%- endif -%}
+      {%- if settings.logo != blank -%}
+        "image": {{ settings.logo | image_url: width: 512 | prepend: 'https:' | json }},
+      {%- endif -%}
+      "address": {
+        "@type": "PostalAddress",
+        "streetAddress": {{ settings.store_street | json }},
+        "postalCode": {{ settings.store_postcode | json }},
+        "addressLocality": {{ settings.store_city | json }},
+        {%- if settings.store_province != blank -%}
+          "addressRegion": {{ settings.store_province | json }},
+        {%- endif -%}
+        "addressCountry": "IT"
+      }
+      {%- if settings.store_latitude != blank and settings.store_longitude != blank -%}
+        , "geo": {
+          "@type": "GeoCoordinates",
+          "latitude": {{ settings.store_latitude | json }},
+          "longitude": {{ settings.store_longitude | json }}
+        }
+      {%- endif -%}
+      {%- if settings.store_hours_schema != blank -%}
+        , "openingHours": {{ settings.store_hours_schema | json }}
+      {%- endif -%}
+      {%- if settings.business_vat != blank -%}
+        , "vatID": {{ settings.business_vat | json }}
+      {%- endif -%}
+    }
+  {%- endcapture -%}
+
+  <script type="application/ld+json">
+    {{ local_business_schema }}
+  </script>
+{%- endif -%}

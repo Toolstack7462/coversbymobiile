@@ -1,0 +1,107 @@
+{% doc %}
+  Renders online availability for a product or variant.
+
+  INTEGRITY RULES:
+  - Low-stock messaging requires BOTH a merchant setting to be enabled AND real Shopify
+    inventory below a configured threshold. It is never shown to manufacture urgency.
+  - The exact remaining quantity is hidden unless the merchant explicitly opts in — inventory
+    levels are normally commercially sensitive.
+  - Availability is read from Shopify, never inferred client-side.
+  - Status is never colour alone: each state pairs a distinct icon with distinct text.
+
+  This is ONLINE availability. Store pickup is a separate question answered by
+  `snippets/pickup-status.liquid`.
+
+  @param {object} product - The product.
+  @param {object} [variant] - Specific variant. Defaults to the selected/first available.
+  @param {boolean} [compact] - Card-sized rendering. Defaults to false.
+
+  @example
+  {% render 'stock-status', product: product, variant: current_variant %}
+{% enddoc %}
+
+{%- liquid
+  assign target = variant | default: product.selected_or_first_available_variant
+
+  assign state = 'out_of_stock'
+  if target.available
+    assign state = 'in_stock'
+    if target.inventory_management != blank and target.inventory_policy == 'continue' and target.inventory_quantity <= 0
+      assign state = 'backorder'
+    endif
+  endif
+
+  # Low stock is a narrow, evidence-based case: enabled by the merchant, tracked by Shopify,
+  # not oversellable, and genuinely at or below the configured threshold.
+  assign show_low = false
+  if state == 'in_stock' and settings.show_low_stock
+    if target.inventory_management != blank and target.inventory_policy == 'deny'
+      if target.inventory_quantity > 0 and target.inventory_quantity <= settings.low_stock_threshold
+        assign show_low = true
+      endif
+    endif
+  endif
+
+  assign classes = 'stock'
+  if compact
+    assign classes = classes | append: ' stock--compact'
+  endif
+-%}
+
+<p class="{{ classes }} stock--{{ state }}{% if show_low %} stock--low{% endif %}">
+  {%- if show_low -%}
+    {% render 'icon', name: 'alert-circle', class: 'icon--sm' %}
+    {%- if settings.show_inventory_quantity -%}
+      {{ 'inventory.low_stock_count' | t: count: target.inventory_quantity }}
+    {%- else -%}
+      {{ 'inventory.low_stock' | t }}
+    {%- endif -%}
+  {%- elsif state == 'in_stock' -%}
+    {% render 'icon', name: 'check-circle', class: 'icon--sm' %}
+    {{ 'inventory.in_stock' | t }}
+  {%- elsif state == 'backorder' -%}
+    {% render 'icon', name: 'clock', class: 'icon--sm' %}
+    {{ 'inventory.backorder' | t }}
+  {%- else -%}
+    {% render 'icon', name: 'alert-circle', class: 'icon--sm' %}
+    {{ 'inventory.out_of_stock' | t }}
+  {%- endif -%}
+</p>
+
+{% stylesheet %}
+  .stock {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    margin: 0;
+    font-size: var(--text-ui);
+    line-height: var(--text-ui-lh);
+    font-weight: var(--weight-medium);
+  }
+
+  .stock--compact {
+    font-size: var(--text-caption);
+    line-height: var(--text-caption-lh);
+  }
+
+  .stock .icon {
+    flex: none;
+  }
+
+  /* Green is reserved for genuine availability and success. */
+  .stock--in_stock {
+    color: var(--color-success-text);
+  }
+
+  .stock--backorder {
+    color: var(--color-warning);
+  }
+
+  .stock--out_of_stock {
+    color: var(--color-text-secondary);
+  }
+
+  .stock--low {
+    color: var(--color-warning);
+  }
+{% endstylesheet %}

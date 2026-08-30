@@ -1,0 +1,15 @@
+{
+  "sections": {
+    "main": {
+      "type": "main-collection",
+      "settings": {
+        "show_breadcrumbs": true,
+        "products_per_page": 24,
+        "enable_load_more": true
+      }
+    }
+  },
+  "order": [
+    "main"
+  ]
+}

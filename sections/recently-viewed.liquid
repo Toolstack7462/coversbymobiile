@@ -1,0 +1,59 @@
+{% comment %}
+  Recently viewed products.
+
+  The list of viewed product ids lives in the customer's own browser (localStorage) — the theme
+  stores no browsing history on any server and sends none to a third party. It is per-browser
+  and per-device, and the theme never implies otherwise.
+
+  The cards themselves are rendered server-side: the client asks Shopify's search endpoint for
+  this section with the stored ids, so prices, availability and compatibility come from Shopify
+  rather than being reconstructed in JavaScript.
+
+  Renders nothing until there is something to show, so it never leaves an empty heading behind.
+{% endcomment %}
+
+{%- if search.performed and search.results.size > 0 -%}
+  {%- comment -%} Rendered into the placeholder by recently-viewed.js. {%- endcomment -%}
+  <ul class="grid grid--products" role="list" data-recently-viewed-results>
+    {%- for product in search.results -%}
+      {%- if product.object_type == 'product' -%}
+        <li>{% render 'product-card', product: product, show_quick_add: false %}</li>
+      {%- endif -%}
+    {%- endfor -%}
+  </ul>
+{%- else -%}
+  <section class="section" data-recently-viewed hidden>
+    <div class="page">
+      <header class="section-head">
+        <div>
+          <h2 class="text-h2">{%- if section.settings.heading != blank -%}{{ section.settings.heading }}{%- else -%}{{ 'products.recently_viewed' | t }}{%- endif -%}</h2>
+        </div>
+      </header>
+      <div data-recently-viewed-target></div>
+    </div>
+  </section>
+
+  <script type="module" src="{{ 'recently-viewed.js' | asset_url }}"></script>
+{%- endif -%}
+
+{% schema %}
+{
+  "name": "t:names.recently_viewed",
+  "tag": "section",
+  "class": "recently-viewed-section",
+  "settings": [
+    { "type": "text", "id": "heading", "label": "t:labels.heading" },
+    {
+      "type": "range",
+      "id": "products_to_show",
+      "min": 4,
+      "max": 12,
+      "step": 4,
+      "label": "t:labels.products_to_show",
+      "default": 4
+    },
+    { "type": "paragraph", "content": "t:info.local_storage" }
+  ],
+  "presets": [{ "name": "t:names.recently_viewed", "category": "t:categories.product" }]
+}
+{% endschema %}

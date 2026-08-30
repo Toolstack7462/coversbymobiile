@@ -1,0 +1,93 @@
+<!doctype html>
+<html lang="{{ request.locale.iso_code }}">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+    <meta name="theme-color" content="{{ settings.color_background | default: '#F7F8F5' }}">
+
+    {%- comment -%}
+      Head order is deliberate and affects LCP:
+      1. Preconnect to the CDN so font and image requests start immediately.
+      2. Design tokens and font faces inline - no request, no flash of unstyled type.
+      3. Preload only the two fonts actually used above the fold.
+      4. Critical CSS.
+      5. Everything else.
+    {%- endcomment -%}
+
+    <link rel="preconnect" href="https://cdn.shopify.com" crossorigin>
+
+    {% render 'theme-tokens' %}
+
+    {%- if settings.font_self_hosted -%}
+      {%- comment -%}
+        Only the Latin subsets are preloaded. Italian accented characters all live in the Latin
+        range, so Latin-Extended is fetched on demand and never competes with the LCP image for
+        bandwidth.
+      {%- endcomment -%}
+      {{ 'manrope-latin.woff2' | asset_url | preload_tag: as: 'font', type: 'font/woff2', crossorigin: 'anonymous' }}
+      {{ 'inter-latin.woff2' | asset_url | preload_tag: as: 'font', type: 'font/woff2', crossorigin: 'anonymous' }}
+    {%- endif -%}
+
+    {{ 'critical.css' | asset_url | stylesheet_tag }}
+
+    {% render 'meta-tags' %}
+    {% render 'schema-organization' %}
+
+    {%- if settings.logo != blank -%}
+      <link rel="icon" type="image/png" href="{{ settings.logo | image_url: width: 48, height: 48 }}">
+    {%- endif -%}
+
+    {% render 'js-context' %}
+
+    {{ content_for_header }}
+
+    <script type="module" src="{{ 'device-context.js' | asset_url }}"></script>
+  </head>
+
+  <body class="template-{{ request.page_type | handle }}">
+    <a class="skip-link" href="#main-content">{{ 'general.accessibility.skip_to_content' | t }}</a>
+
+    {%- comment -%}
+      One shared polite live region. Cart updates, filter counts, device changes and validation
+      results all announce through this, so screen-reader users are told what changed without
+      every component needing its own region.
+    {%- endcomment -%}
+    <div id="ita-live-region" class="visually-hidden" role="status" aria-live="polite" aria-atomic="true"></div>
+
+    {% sections 'header-group' %}
+
+    <main id="main-content" tabindex="-1">
+      {{ content_for_layout }}
+    </main>
+
+    {% sections 'footer-group' %}
+
+    {%- comment -%}
+      Overlays sit outside <main> so they are siblings of the page content, which keeps focus
+      management and `inert` handling straightforward.
+    {%- endcomment -%}
+    {% section 'cart-drawer' %}
+
+    {%- if settings.enable_consent_banner -%}
+      {% section 'consent-banner' %}
+    {%- endif -%}
+
+    {%- if settings.enable_mobile_nav -%}
+      {% section 'mobile-nav' %}
+    {%- endif -%}
+
+    <script type="module" src="{{ 'cart.js' | asset_url }}"></script>
+
+    {%- comment -%}
+      Wishlist and comparison are opt-in merchant features. When disabled they cost nothing:
+      the script is never requested at all.
+    {%- endcomment -%}
+    {%- if settings.enable_wishlist -%}
+      <script type="module" src="{{ 'wishlist.js' | asset_url }}"></script>
+    {%- endif -%}
+
+    {%- if settings.enable_compare -%}
+      <script type="module" src="{{ 'compare.js' | asset_url }}"></script>
+    {%- endif -%}
+  </body>
+</html>

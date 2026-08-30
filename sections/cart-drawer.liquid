@@ -1,0 +1,188 @@
+{% comment %}
+  Cart drawer.
+
+  Re-rendered server-side through the Section Rendering API after every cart mutation, so the
+  markup, prices and discounts always come from Shopify rather than being patched together on
+  the client. That is what keeps the displayed total trustworthy.
+
+  The trigger in the header is a real link to /cart, so with JavaScript unavailable the customer
+  reaches the full cart page instead. Nothing here is required to complete a purchase.
+{% endcomment %}
+
+<cart-drawer class="drawer" id="cart-drawer" hidden>
+  <div
+    class="drawer__panel"
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="cart-drawer-title"
+    data-drawer-panel
+  >
+    <header class="drawer__header">
+      <h2 class="drawer__title text-h3" id="cart-drawer-title">{{ 'cart.drawer_title' | t }}</h2>
+      <button class="icon-button" type="button" data-drawer-close>
+        {% render 'icon', name: 'close', class: 'icon--lg' %}
+        <span class="visually-hidden">{{ 'general.accessibility.close' | t }}</span>
+      </button>
+    </header>
+
+    {%- if cart.item_count > 0 -%}
+      {% render 'free-shipping-bar', cart: cart %}
+
+      <div class="drawer__body">
+        {% render 'cart-items', cart: cart, compact: true %}
+      </div>
+
+      <footer class="drawer__footer">
+        {%- if cart.cart_level_discount_applications.size > 0 -%}
+          <ul class="drawer__discounts" role="list">
+            {%- for discount in cart.cart_level_discount_applications -%}
+              <li class="drawer__row text-ui drawer__row--discount">
+                <span>{{ discount.title }}</span>
+                <span class="tabular">−{{ discount.total_allocated_amount | money }}</span>
+              </li>
+            {%- endfor -%}
+          </ul>
+        {%- endif -%}
+
+        <div class="drawer__row drawer__row--total">
+          <span class="text-ui">{{ 'cart.subtotal' | t }}</span>
+          <span class="drawer__total tabular">{{ cart.total_price | money }}</span>
+        </div>
+
+        <p class="text-caption text-secondary">{{ 'cart.taxes_note' | t }}</p>
+        <p class="text-caption text-secondary drawer__fulfilment">
+          {% render 'icon', name: 'store', class: 'icon--sm' %}
+          {{ 'cart.fulfilment_note' | t }}
+        </p>
+
+        <form action="{{ routes.cart_url }}" method="post">
+          <button class="button button--primary button--full" type="submit" name="checkout">
+            {{ 'cart.checkout' | t }}
+          </button>
+        </form>
+
+        <a class="button button--ghost button--full" href="{{ routes.cart_url }}">
+          {{ 'cart.view_cart' | t }}
+        </a>
+      </footer>
+    {%- else -%}
+      {%- comment -%}
+        An empty cart is a conversion surface, not a dead end: it offers the two fastest routes
+        back into the catalogue.
+      {%- endcomment -%}
+      <div class="drawer__body drawer__empty">
+        <div class="empty-state">
+          {% render 'icon', name: 'cart', class: 'icon--xl' %}
+          <p class="empty-state__title text-h3">{{ 'cart.empty_title' | t }}</p>
+          <p class="text-ui text-secondary">{{ 'cart.empty_body' | t }}</p>
+          <div class="empty-state__actions">
+            <a class="button button--primary" href="{{ routes.all_products_collection_url }}">
+              {{ 'general.actions.continue_shopping' | t }}
+            </a>
+            <a class="button button--secondary" href="{{ section.settings.device_finder_url | default: '/pages/trova-dispositivo' }}">
+              {{ 'device.open_finder' | t }}
+            </a>
+          </div>
+        </div>
+      </div>
+    {%- endif -%}
+  </div>
+</cart-drawer>
+
+{% stylesheet %}
+  .drawer {
+    position: fixed;
+    inset: 0;
+    z-index: var(--z-drawer);
+    display: flex;
+    justify-content: flex-end;
+    background-color: rgb(11 18 32 / 0.4);
+  }
+
+  .drawer__panel {
+    display: flex;
+    flex-direction: column;
+    width: min(94vw, 440px);
+    height: 100%;
+    background-color: var(--color-surface);
+    box-shadow: var(--shadow-drawer);
+    padding-block-end: env(safe-area-inset-bottom);
+  }
+
+  .drawer__header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-3);
+    padding: var(--space-4);
+    border-block-end: var(--border-width) solid var(--color-border);
+  }
+
+  .drawer__title {
+    margin: 0;
+    font-family: var(--font-heading);
+  }
+
+  .drawer__body {
+    flex: 1;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    padding: var(--space-4);
+  }
+
+  .drawer__footer {
+    display: grid;
+    gap: var(--space-2);
+    padding: var(--space-4);
+    border-block-start: var(--border-width) solid var(--color-border);
+    background-color: var(--color-surface);
+  }
+
+  .drawer__discounts {
+    list-style: none;
+    display: grid;
+    gap: var(--space-1);
+  }
+
+  .drawer__row {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: var(--space-3);
+  }
+
+  .drawer__row--discount {
+    color: var(--color-success-text);
+  }
+
+  .drawer__total {
+    font-family: var(--font-heading);
+    font-size: var(--text-price);
+    font-weight: var(--weight-heading);
+  }
+
+  .drawer__fulfilment {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+  }
+
+  .drawer__empty {
+    display: grid;
+    place-items: center;
+  }
+
+{% endstylesheet %}
+
+{% schema %}
+{
+  "name": "t:names.cart_drawer",
+  "settings": [
+    {
+      "type": "url",
+      "id": "device_finder_url",
+      "label": "Pagina «Trova il tuo dispositivo»"
+    }
+  ]
+}
+{% endschema %}

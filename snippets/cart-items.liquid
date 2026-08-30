@@ -1,0 +1,234 @@
+{% doc %}
+  Renders the cart line items. Shared by the cart drawer and the cart page so the two can never
+  drift apart.
+
+  TRUST BOUNDARY: every price, quantity and discount here is rendered from the server's cart
+  object. The client never computes a total and never sends a price. Quantity inputs carry a
+  `max` derived from real Shopify inventory so a customer cannot request more than exists.
+
+  @param {object} cart - The cart object.
+  @param {boolean} [compact] - Drawer rendering. Defaults to false (cart page).
+
+  @example
+  {% render 'cart-items', cart: cart %}
+{% enddoc %}
+
+<ul class="cart-items{% if compact %} cart-items--compact{% endif %}" role="list">
+  {%- for item in cart.items -%}
+    {%- liquid
+      # Respect real inventory: an untracked or oversellable item has no ceiling, a tracked one
+      # is capped at what actually exists.
+      assign max_qty = ''
+      if item.variant.inventory_management != blank and item.variant.inventory_policy == 'deny'
+        assign max_qty = item.variant.inventory_quantity
+      endif
+    -%}
+    <li class="cart-item" data-cart-item data-line="{{ forloop.index }}" data-key="{{ item.key }}">
+      <a class="cart-item__media" href="{{ item.url }}" tabindex="-1" aria-hidden="true">
+        {%- if item.image -%}
+          <img
+            src="{{ item.image | image_url: width: 160 }}"
+            alt="{{ item.image.alt | default: item.product.title | escape }}"
+            width="80"
+            height="80"
+            loading="lazy"
+          >
+        {%- else -%}
+          <span class="cart-item__media-empty">
+            {% render 'icon', name: 'package', class: 'icon--sm' %}
+          </span>
+        {%- endif -%}
+      </a>
+
+      <div class="cart-item__body">
+        {%- if item.product.vendor != blank -%}
+          <span class="text-caption text-secondary">{{ item.product.vendor }}</span>
+        {%- endif -%}
+
+        <a class="cart-item__title text-ui" href="{{ item.url }}">{{ item.product.title }}</a>
+
+        {%- unless item.product.has_only_default_variant -%}
+          <p class="cart-item__variant text-caption text-secondary">
+            {%- for option in item.options_with_values -%}
+              {{ option.name }}: {{ option.value }}{% unless forloop.last %} · {% endunless %}
+            {%- endfor -%}
+          </p>
+        {%- endunless -%}
+
+        {%- comment -%}
+          Exact compatibility is repeated in the cart on purpose: this is the last moment before
+          checkout where a customer can catch that they picked the wrong model.
+        {%- endcomment -%}
+        {% render 'compat-badge', product: item.product %}
+
+        {%- if item.selling_plan_allocation -%}
+          <p class="text-caption text-secondary">{{ item.selling_plan_allocation.selling_plan.name }}</p>
+        {%- endif -%}
+
+        {%- if item.line_level_discount_allocations.size > 0 -%}
+          <ul class="cart-item__discounts" role="list">
+            {%- for allocation in item.line_level_discount_allocations -%}
+              <li class="text-caption cart-item__discount">
+                {% render 'icon', name: 'check', class: 'icon--sm' %}
+                {{ allocation.discount_application.title }} (−{{ allocation.amount | money }})
+              </li>
+            {%- endfor -%}
+          </ul>
+        {%- endif -%}
+
+        <div class="cart-item__controls">
+          <div class="qty">
+            <label class="visually-hidden" for="qty-{{ item.key }}">
+              {{- 'cart.quantity_for' | t: title: item.product.title -}}
+            </label>
+            <button
+              class="qty__button"
+              type="button"
+              data-qty-down
+              {% if item.quantity <= 1 %}disabled{% endif %}
+            >
+              {% render 'icon', name: 'minus', class: 'icon--sm' %}
+              <span class="visually-hidden">{{ 'products.decrease_quantity' | t }}</span>
+            </button>
+
+            <input
+              class="qty__input tabular"
+              id="qty-{{ item.key }}"
+              type="number"
+              name="updates[]"
+              value="{{ item.quantity }}"
+              min="0"
+              {% if max_qty != blank %}max="{{ max_qty }}"{% endif %}
+              inputmode="numeric"
+              data-qty-input
+              data-key="{{ item.key }}"
+            >
+
+            <button
+              class="qty__button"
+              type="button"
+              data-qty-up
+              {% if max_qty != blank and item.quantity >= max_qty %}disabled{% endif %}
+            >
+              {% render 'icon', name: 'plus', class: 'icon--sm' %}
+              <span class="visually-hidden">{{ 'products.increase_quantity' | t }}</span>
+            </button>
+          </div>
+
+          <button class="cart-item__remove icon-button" type="button" data-cart-remove data-key="{{ item.key }}">
+            {% render 'icon', name: 'trash', class: 'icon--sm' %}
+            <span class="visually-hidden">{{ 'cart.remove_item' | t: title: item.product.title }}</span>
+          </button>
+        </div>
+      </div>
+
+      <div class="cart-item__price tabular">
+        {%- if item.original_line_price > item.final_line_price -%}
+          <s class="text-caption text-secondary">{{ item.original_line_price | money }}</s>
+          <span class="cart-item__price-final">{{ item.final_line_price | money }}</span>
+        {%- else -%}
+          <span class="cart-item__price-final">{{ item.final_line_price | money }}</span>
+        {%- endif -%}
+      </div>
+    </li>
+  {%- endfor -%}
+</ul>
+
+{% stylesheet %}
+  .cart-items {
+    list-style: none;
+    display: grid;
+    gap: var(--space-4);
+  }
+
+  .cart-item {
+    display: grid;
+    grid-template-columns: 80px minmax(0, 1fr) auto;
+    gap: var(--space-3);
+    padding-block-end: var(--space-4);
+    border-block-end: var(--border-width) solid var(--color-border);
+  }
+
+  .cart-item:last-child {
+    border-block-end: 0;
+    padding-block-end: 0;
+  }
+
+  .cart-item__media {
+    width: 80px;
+    height: 80px;
+    border: var(--border-width) solid var(--color-border);
+    border-radius: var(--radius-control);
+    overflow: hidden;
+    background-color: var(--color-surface);
+  }
+
+  .cart-item__media img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    padding: 6%;
+  }
+
+  .cart-item__media-empty {
+    display: grid;
+    place-items: center;
+    width: 100%;
+    height: 100%;
+    background-color: var(--color-surface-sunken);
+    color: var(--color-text-secondary);
+  }
+
+  .cart-item__body {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-1);
+    min-width: 0;
+  }
+
+  .cart-item__title {
+    font-weight: var(--weight-medium);
+    color: var(--color-ink);
+    text-decoration: none;
+  }
+
+  .cart-item__variant {
+    margin: 0;
+  }
+
+  .cart-item__discounts {
+    list-style: none;
+  }
+
+  .cart-item__discount {
+    display: flex;
+    align-items: center;
+    gap: var(--space-1);
+    color: var(--color-success-text);
+  }
+
+  .cart-item__controls {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    margin-block-start: var(--space-2);
+  }
+
+  .cart-item__price {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 2px;
+    font-weight: var(--weight-semibold);
+    white-space: nowrap;
+  }
+
+  .cart-items--compact .cart-item {
+    grid-template-columns: 64px minmax(0, 1fr) auto;
+  }
+
+  .cart-items--compact .cart-item__media {
+    width: 64px;
+    height: 64px;
+  }
+{% endstylesheet %}

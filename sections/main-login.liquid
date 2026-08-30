@@ -1,0 +1,115 @@
+{% comment %}
+  Login, plus password recovery.
+
+  ACCOUNTS ARE OPTIONAL. The page states clearly that a purchase can be completed without
+  registering, because forcing account creation is one of the largest single causes of checkout
+  abandonment — and Shopify's checkout supports guest purchase natively.
+
+  Recovery messaging never confirms whether an address is registered: doing so leaks which email
+  addresses have accounts.
+{% endcomment %}
+
+<div class="account page">
+  <div class="account__panel surface">
+    {%- comment -%} Shopify toggles this form via the #recover fragment. {%- endcomment -%}
+    <div id="recover" class="account__form-block">
+      <h1 class="text-h2">{{ 'customers.recover.title' | t }}</h1>
+      <p class="text-ui text-secondary">{{ 'customers.recover.body' | t }}</p>
+
+      {%- form 'recover_customer_password' -%}
+        {%- if form.posted_successfully? -%}
+          <p class="account__message account__message--success text-ui" role="status">
+            {{ 'customers.recover.success' | t }}
+          </p>
+        {%- endif -%}
+
+        <div class="field">
+          <label class="field__label" for="recover-email">{{ 'forms.email' | t }}</label>
+          <input
+            class="input"
+            id="recover-email"
+            type="email"
+            name="email"
+            autocomplete="email"
+            required
+          >
+        </div>
+
+        <button class="button button--primary button--full" type="submit">
+          {{ 'customers.recover.submit' | t }}
+        </button>
+
+        <a class="account__link text-ui" href="#login">{{ 'general.actions.back' | t }}</a>
+      {%- endform -%}
+    </div>
+
+    <div id="login" class="account__form-block">
+      <h1 class="text-h2">{{ 'customers.login.title' | t }}</h1>
+
+      {%- form 'customer_login', novalidate: 'novalidate' -%}
+        {%- if form.errors -%}
+          <div class="account__message account__message--error" role="alert">
+            <p class="text-ui">{{ 'customers.login.error' | t }}</p>
+          </div>
+        {%- endif -%}
+
+        <div class="field">
+          <label class="field__label" for="login-email">{{ 'customers.login.email' | t }}</label>
+          <input
+            class="input"
+            id="login-email"
+            type="email"
+            name="customer[email]"
+            autocomplete="email"
+            required
+            {% if form.errors %}aria-invalid="true"{% endif %}
+          >
+        </div>
+
+        <div class="field">
+          <label class="field__label" for="login-password">{{ 'customers.login.password' | t }}</label>
+          <input
+            class="input"
+            id="login-password"
+            type="password"
+            name="customer[password]"
+            autocomplete="current-password"
+            required
+            {% if form.errors %}aria-invalid="true"{% endif %}
+          >
+        </div>
+
+        <button class="button button--primary button--full" type="submit">
+          {{ 'customers.login.submit' | t }}
+        </button>
+
+        <a class="account__link text-ui" href="#recover">{{ 'customers.login.forgot' | t }}</a>
+      {%- endform -%}
+
+      <div class="account__aside">
+        {%- comment -%}
+          The guest note is deliberately prominent: a customer who thinks they must register may
+          simply leave.
+        {%- endcomment -%}
+        <p class="account__guest text-ui">
+          {% render 'icon', name: 'info', class: 'icon--sm' %}
+          {{ 'customers.login.guest_note' | t }}
+        </p>
+
+        {%- if shop.customer_accounts_enabled -%}
+          <p class="text-ui">
+            {{ 'customers.register.has_account' | t }}
+            <a href="{{ routes.account_register_url }}">{{ 'customers.login.create_account' | t }}</a>
+          </p>
+        {%- endif -%}
+      </div>
+    </div>
+  </div>
+</div>
+
+{% schema %}
+{
+  "name": "Accedi",
+  "settings": []
+}
+{% endschema %}

@@ -1,0 +1,151 @@
+{% doc %}
+  Breadcrumb navigation plus its BreadcrumbList structured data.
+
+  Emitted from the actual page context, never from a guessed hierarchy. On a product page the
+  trail uses the collection the customer arrived through when Shopify provides it, so the path
+  matches how they actually got here.
+
+  @example
+  {% render 'breadcrumbs' %}
+{% enddoc %}
+
+{%- liquid
+  assign crumbs = ''
+  assign urls = ''
+
+  case request.page_type
+    when 'product'
+      if collection != blank
+        assign crumbs = collection.title
+        assign urls = collection.url
+      endif
+      assign crumbs = crumbs | append: '|' | append: product.title
+      assign urls = urls | append: '|' | append: product.url
+
+    when 'collection'
+      if current_tags != blank
+        assign crumbs = collection.title | append: '|' | append: current_tags.first
+        assign urls = collection.url | append: '|' | append: request.path
+      else
+        assign crumbs = collection.title
+        assign urls = collection.url
+      endif
+
+    when 'page'
+      assign crumbs = page.title
+      assign urls = page.url
+
+    when 'article'
+      assign crumbs = blog.title | append: '|' | append: article.title
+      assign urls = blog.url | append: '|' | append: article.url
+
+    when 'blog'
+      assign crumbs = blog.title
+      assign urls = blog.url
+
+    when 'search'
+      assign crumbs = 'search.title' | t
+      assign urls = routes.search_url
+  endcase
+
+  assign crumb_list = crumbs | split: '|'
+  assign url_list = urls | split: '|'
+-%}
+
+{%- if crumb_list.size > 0 -%}
+  <nav class="breadcrumbs" aria-label="{{ 'general.accessibility.breadcrumb' | t }}">
+    <ol class="breadcrumbs__list" role="list">
+      <li class="breadcrumbs__item">
+        <a class="breadcrumbs__link" href="{{ routes.root_url }}">Home</a>
+        {% render 'icon', name: 'chevron-right', class: 'breadcrumbs__sep icon--sm' %}
+      </li>
+
+      {%- for crumb in crumb_list -%}
+        {%- if crumb != blank -%}
+          <li class="breadcrumbs__item">
+            {%- if forloop.last -%}
+              <span class="breadcrumbs__current" aria-current="page">{{ crumb }}</span>
+            {%- else -%}
+              <a class="breadcrumbs__link" href="{{ url_list[forloop.index0] }}">{{ crumb }}</a>
+              {% render 'icon', name: 'chevron-right', class: 'breadcrumbs__sep icon--sm' %}
+            {%- endif -%}
+          </li>
+        {%- endif -%}
+      {%- endfor -%}
+    </ol>
+  </nav>
+
+  {%- capture breadcrumb_schema -%}
+    {
+      "@context": "https://schema.org",
+      "@type": "BreadcrumbList",
+      "itemListElement": [
+        {
+          "@type": "ListItem",
+          "position": 1,
+          "name": "Home",
+          "item": {{ shop.url | json }}
+        }
+        {%- for crumb in crumb_list -%}
+          {%- if crumb != blank -%}
+            ,{
+              "@type": "ListItem",
+              "position": {{ forloop.index | plus: 1 }},
+              "name": {{ crumb | json }},
+              "item": {{ shop.url | append: url_list[forloop.index0] | json }}
+            }
+          {%- endif -%}
+        {%- endfor -%}
+      ]
+    }
+  {%- endcapture -%}
+
+  <script type="application/ld+json">
+    {{ breadcrumb_schema }}
+  </script>
+{%- endif -%}
+
+{% stylesheet %}
+  .breadcrumbs {
+    padding-block: var(--space-3);
+  }
+
+  .breadcrumbs__list {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--space-1);
+    list-style: none;
+    font-size: var(--text-caption);
+    line-height: var(--text-caption-lh);
+  }
+
+  .breadcrumbs__item {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-1);
+  }
+
+  .breadcrumbs__link {
+    color: var(--color-text-secondary);
+    text-decoration: none;
+    /* Small type, so the hit area is padded out rather than the text enlarged. */
+    padding-block: var(--space-2);
+  }
+
+  .breadcrumbs__link:hover {
+    color: var(--color-ink);
+    text-decoration: underline;
+  }
+
+  .breadcrumbs__current {
+    color: var(--color-ink);
+    font-weight: var(--weight-medium);
+  }
+
+  .breadcrumbs__sep {
+    width: 0.75rem;
+    height: 0.75rem;
+    color: var(--color-border-strong);
+  }
+{% endstylesheet %}

@@ -1,0 +1,170 @@
+{% doc %}
+  Renders a price with legally defensible discount presentation.
+
+  PRICE INTEGRITY — the rules this snippet enforces:
+
+  - A percentage saving is shown ONLY when `custom.prior_price_30d` is populated. Under the EU
+    Price Indication Directive as implemented in Italy (D.Lgs. 84/2022), an announced reduction
+    must reference the lowest price applied in the preceding 30 days. Shopify's
+    `compare_at_price` is a merchandising field, not proof of that reference price.
+  - When only `compare_at_price` is set, the previous price is struck through with NO percentage
+    claim attached.
+  - Nothing is ever computed from data the merchant has not supplied.
+
+  @param {object} product - Product, used for range detection and metafields.
+  @param {object} [variant] - Specific variant. Defaults to the selected or first available.
+  @param {string} [size] - 'lg' for the product page, default for cards.
+  @param {boolean} [show_prior] - Render the 30-day reference line. Defaults to true on the PDP.
+
+  @example
+  {% render 'price', product: product %}
+  {% render 'price', product: product, variant: current_variant, size: 'lg', show_prior: true %}
+{% enddoc %}
+
+{%- liquid
+  assign target = variant | default: product.selected_or_first_available_variant
+  assign price = target.price | default: product.price
+  assign compare_at = target.compare_at_price | default: product.compare_at_price
+  # prior_price_30d is a Money metafield, so `.value.amount` is in MAJOR units while `price`
+  # and `compare_at` are integer cents. Comparing them directly silently never matched, which
+  # meant the 30-day reference percentage never rendered at all.
+  assign prior_money = product.metafields.custom.prior_price_30d.value
+  assign prior_cents = 0
+  if prior_money != blank
+    assign prior_cents = prior_money.amount | times: 100 | round
+  endif
+
+  assign on_sale = false
+  if compare_at != blank and compare_at > price
+    assign on_sale = true
+  endif
+
+  # A percentage is only honest when we have a documented reference price.
+  assign show_percent = false
+  if on_sale and prior_cents > 0 and prior_cents > price
+    assign show_percent = true
+    assign saving = prior_cents | minus: price | times: 100 | divided_by: prior_cents
+  endif
+
+  assign is_range = false
+  if product.price_varies and variant == blank
+    assign is_range = true
+  endif
+
+  assign price_class = 'price'
+  if size == 'lg'
+    assign price_class = price_class | append: ' price--lg'
+  endif
+  if on_sale
+    assign price_class = price_class | append: ' price--on-sale'
+  endif
+-%}
+
+<div class="{{ price_class }}">
+  <div class="price__row">
+    <span class="price__current tabular">
+      {%- if is_range -%}
+        {%- assign from_price = product.price_min | money -%}
+        {{ 'price.from' | t: price: from_price }}
+      {%- else -%}
+        {{ price | money }}
+      {%- endif -%}
+      <span class="visually-hidden">
+        {%- if on_sale %}{{ 'price.sale' | t }}{% else %}{{ 'price.regular' | t }}{% endif -%}
+      </span>
+    </span>
+
+    {%- if on_sale -%}
+      <s class="price__compare tabular">
+        <span class="visually-hidden">{{ 'price.compare_at' | t }}</span>
+        {{ compare_at | money }}
+      </s>
+
+      {%- comment -%}
+        The percentage only appears alongside a verified 30-day reference price. Without it the
+        strikethrough stands alone, which is accurate and still communicates a reduction.
+      {%- endcomment -%}
+      {%- if show_percent -%}
+        <span class="price__saving">{{ 'price.save_percent' | t: percent: saving }}</span>
+      {%- endif -%}
+    {%- endif -%}
+  </div>
+
+  {%- if show_prior != false and prior_cents > 0 and on_sale -%}
+    <p class="price__prior text-caption text-secondary tabular">
+      {%- comment -%} Already a Money object: no `| money` filter. {%- endcomment -%}
+      {{ 'price.prior_price' | t }}: {{ prior_money }}
+    </p>
+  {%- endif -%}
+
+  {%- if target.unit_price_measurement -%}
+    <p class="price__unit text-caption text-secondary tabular">
+      {{ target.unit_price | money }}
+      <span aria-hidden="true">/</span>
+      <span class="visually-hidden">{{ 'general.accessibility.unit_price' | t }}</span>
+      {%- if target.unit_price_measurement.reference_value != 1 -%}
+        {{ target.unit_price_measurement.reference_value }}
+      {%- endif -%}
+      {{ target.unit_price_measurement.reference_unit }}
+    </p>
+  {%- endif -%}
+</div>
+
+{% stylesheet %}
+  .price {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-1);
+  }
+
+  .price__row {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: var(--space-2);
+  }
+
+  .price__current {
+    font-family: var(--font-heading);
+    font-size: var(--text-price);
+    line-height: var(--text-price-lh);
+    font-weight: var(--weight-heading);
+    letter-spacing: -0.01em;
+  }
+
+  /* No invented step: --text-price already clamps 20 -> 24 across breakpoints, and its
+     paired line-height comes with it. Emphasis on the PDP comes from weight and context. */
+  .price--lg .price__current {
+    font-size: var(--text-price);
+    line-height: var(--text-price-lh);
+  }
+
+  /* Red is reserved for genuine sale information, errors and destructive actions. */
+  .price--on-sale .price__current {
+    color: var(--color-danger-text);
+  }
+
+  .price__compare {
+    font-size: var(--text-ui);
+    line-height: var(--text-ui-lh);
+    color: var(--color-text-secondary);
+    text-decoration-thickness: 1px;
+  }
+
+  .price__saving {
+    display: inline-flex;
+    align-items: center;
+    padding: var(--space-half) var(--space-2);
+    border-radius: var(--radius-chip);
+    background-color: var(--color-danger-surface);
+    color: var(--color-danger-text);
+    font-size: var(--text-caption);
+    line-height: var(--text-caption-lh);
+    font-weight: var(--weight-semibold);
+  }
+
+  .price__prior,
+  .price__unit {
+    margin: 0;
+  }
+{% endstylesheet %}

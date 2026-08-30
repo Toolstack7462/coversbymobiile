@@ -1,0 +1,129 @@
+{% comment %}
+  Shop by device brand.
+
+  Driven by the `device_brand` metaobjects, so adding Nothing or OPPO is a data change in the
+  Shopify admin, not a theme edit. The brief requires exactly that: new brands without code.
+
+  Brand logos are merchant-uploaded assets. The theme ships none — a manufacturer logo is
+  protected trade dress and cannot be bundled with a theme.
+{% endcomment %}
+
+{%- liquid
+  assign brands = shop.metaobjects.device_brand.values | sort: 'sort_order'
+-%}
+
+<section class="section">
+  <div class="page">
+    <header class="section-head">
+      <div>
+        {%- if section.settings.eyebrow != blank -%}
+          <p class="eyebrow">{{ section.settings.eyebrow }}</p>
+        {%- endif -%}
+        <h2 class="text-h2">{%- if section.settings.heading != blank -%}{{ section.settings.heading }}{%- else -%}{{ 'header.all_brands' | t }}{%- endif -%}</h2>
+      </div>
+
+      {%- if section.settings.link != blank -%}
+        <a class="section-head__link text-ui" href="{{ section.settings.link }}">
+          {{ 'general.actions.see_all' | t }}
+          {% render 'icon', name: 'arrow-right', class: 'icon--sm' %}
+        </a>
+      {%- endif -%}
+    </header>
+
+    {%- if brands.size > 0 -%}
+      <ul class="brands" role="list">
+        {%- for brand in brands -%}
+          {%- if brand.active.value == false -%}{%- continue -%}{%- endif -%}
+          {%- liquid
+            assign brand_url = brand.collection.value.url
+            if brand_url == blank
+              assign brand_query = brand.name.value | url_encode
+              assign brand_url = routes.search_url | append: '?q=' | append: brand_query
+            endif
+          -%}
+          <li>
+            <a class="brand" href="{{ brand_url }}">
+              {%- if brand.logo.value != blank -%}
+                <img
+                  class="brand__logo"
+                  src="{{ brand.logo.value | image_url: width: 240 }}"
+                  alt=""
+                  width="120"
+                  height="60"
+                  loading="lazy"
+                >
+              {%- endif -%}
+              <span class="brand__name text-ui">{{ brand.name.value }}</span>
+            </a>
+          </li>
+        {%- endfor -%}
+      </ul>
+    {%- else -%}
+      <div class="empty-state surface">
+        {% render 'icon', name: 'device', class: 'icon--xl' %}
+        <p class="empty-state__title text-h3">{{ 'errors.missing_config_title' | t }}</p>
+        <p class="text-ui text-secondary">
+          Aggiungi le marche in Impostazioni &gt; Contenuti personalizzati &gt; device_brand.
+        </p>
+      </div>
+    {%- endif -%}
+  </div>
+</section>
+
+{% stylesheet %}
+  .brands {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+    gap: var(--space-3);
+    list-style: none;
+  }
+
+  .brand {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-2);
+    /* Comfortably above the minimum target size: these are primary navigation. */
+    min-height: 104px;
+    padding: var(--space-4);
+    background-color: var(--color-surface);
+    border: var(--border-width) solid var(--color-border);
+    border-radius: var(--radius-card);
+    color: var(--color-ink);
+    text-decoration: none;
+    transition: border-color var(--duration-fast) var(--ease);
+  }
+
+  .brand:hover {
+    border-color: var(--color-ink);
+  }
+
+  /* One declared ratio (2:1) shared with the device finder, with object-fit absorbing the
+     variance between real logo files. */
+  .brand__logo {
+    width: auto;
+    max-width: 120px;
+    height: 32px;
+    object-fit: contain;
+  }
+
+  .brand__name {
+    font-weight: var(--weight-medium);
+  }
+{% endstylesheet %}
+
+{% schema %}
+{
+  "name": "t:names.shop_by_brand",
+  "tag": "section",
+  "class": "shop-by-brand-section",
+  "settings": [
+    { "type": "text", "id": "eyebrow", "label": "t:labels.eyebrow" },
+    { "type": "text", "id": "heading", "label": "t:labels.heading", "default": "Acquista per marca" },
+    { "type": "url", "id": "link", "label": "t:labels.link" },
+    { "type": "paragraph", "content": "t:info.requires_metaobject" }
+  ],
+  "presets": [{ "name": "t:names.shop_by_brand", "category": "t:categories.discovery" }]
+}
+{% endschema %}

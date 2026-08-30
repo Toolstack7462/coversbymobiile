@@ -1,0 +1,231 @@
+{% comment %}
+  Collection template. Also used for device-specific collections.
+
+  This is the highest-traffic template in the store after the product page, and the one where an
+  accessory shopper decides whether the catalogue is trustworthy.
+
+  Key decisions:
+  - Filters live in a left sidebar on desktop (always visible, no click to discover) and a
+    full-height drawer on mobile.
+  - Filter and sort state live in the URL, so back/forward, sharing and refresh all behave.
+  - Pagination is real. "Load more" is layered on top of it and updates the URL; it never
+    replaces pagination and there is no uncontrolled infinite scroll.
+  - The result count is always visible: a customer scanning a category wants to know whether
+    they are choosing from 6 cases or 300.
+{% endcomment %}
+
+{%- liquid
+  assign per_page = section.settings.products_per_page | default: 24
+-%}
+
+<div class="collection page">
+  {%- if section.settings.show_breadcrumbs -%}
+    {% render 'breadcrumbs' %}
+  {%- endif -%}
+
+  <header class="collection__header">
+    <h1 class="collection__title text-h1">{{ collection.title }}</h1>
+
+    {%- if collection.description != blank -%}
+      <div class="collection__description text-body text-measure">
+        {{ collection.description }}
+      </div>
+    {%- endif -%}
+
+    {%- comment -%}
+      Device context. Rendered empty and filled in client-side, because a cached page must not
+      carry one visitor's device to the next.
+    {%- endcomment -%}
+    <device-chip class="collection__device">
+      <p class="collection__device-note surface--device text-ui" data-device-active hidden>
+        {% render 'icon', name: 'device', class: 'icon--sm' %}
+        <span>{{ 'device.my_device' | t }}: <strong data-device-name></strong></span>
+        <button class="collection__device-remove" type="button" data-device-remove>
+          {{ 'device.remove_device' | t }}
+        </button>
+      </p>
+    </device-chip>
+  </header>
+
+  {%- paginate collection.products by per_page -%}
+    <div class="collection__layout">
+      <aside class="collection__sidebar" id="collection-filters">
+        <h2 class="visually-hidden">{{ 'facets.title' | t }}</h2>
+        {% render 'facets', results: collection, context: 'sidebar' %}
+      </aside>
+
+      <div class="collection__main">
+        <div class="collection__toolbar">
+          <p class="collection__count text-ui" role="status">
+            {{- 'collections.product_count' | t: count: collection.products_count -}}
+          </p>
+
+          <div class="collection__toolbar-actions">
+            <button
+              class="button button--secondary button--small collection__filter-toggle"
+              type="button"
+              aria-expanded="false"
+              aria-controls="collection-filters"
+              data-facets-open
+            >
+              {% render 'icon', name: 'filter', class: 'icon--sm' %}
+              {{ 'facets.open' | t }}
+            </button>
+
+            {% render 'sort-select', results: collection %}
+          </div>
+        </div>
+
+        {%- comment -%}
+          The wrapper sits OUTSIDE the branch so it exists in both the results and the empty
+          state. facets.js swaps on it; if it were missing from the empty branch, a filter
+          returning nothing would leave the previous products on screen.
+        {%- endcomment -%}
+        <div class="collection__results" data-collection-results>
+          {%- if collection.products.size > 0 -%}
+            <ul class="grid grid--products" role="list" data-product-grid>
+              {%- for product in collection.products -%}
+                {%- comment -%}
+                  Only the first card of the FIRST page is the LCP candidate. Marking more than
+                  one eager would compete for bandwidth and make LCP worse, not better.
+
+                  Computed here rather than inline: Liquid render arguments take values, not
+                  boolean expressions, so `lcp: a and b` would not evaluate as intended.
+                {%- endcomment -%}
+                {%- liquid
+                  assign is_lcp = false
+                  if forloop.first and paginate.current_page == 1
+                    assign is_lcp = true
+                  endif
+                -%}
+                <li>
+                  {% render 'product-card', product: product, lcp: is_lcp, sizes: '(min-width: 1200px) 260px, (min-width: 990px) calc((100vw - 388px) / 3), (min-width: 750px) 30vw, 45vw', show_vendor: section.settings.show_vendor, show_rating: section.settings.show_rating, show_swatches: section.settings.show_swatches, show_quick_add: section.settings.show_quick_add %}
+                </li>
+              {%- endfor -%}
+            </ul>
+
+            {%- if paginate.pages > 1 -%}
+              {% render 'pagination', paginate: paginate, show_load_more: section.settings.enable_load_more %}
+            {%- endif -%}
+          {%- else -%}
+            {%- comment -%}
+              Two different empty states with two different causes and two different fixes.
+            {%- endcomment -%}
+            <div class="empty-state surface">
+            {% render 'icon', name: 'filter', class: 'icon--xl' %}
+            {%- if collection.filters.size > 0 and collection.current_type == blank -%}
+              <p class="empty-state__title text-h3">{{ 'facets.no_results_title' | t }}</p>
+              <p class="text-ui text-secondary">{{ 'facets.no_results_body' | t }}</p>
+              <div class="empty-state__actions">
+                <a class="button button--primary" href="{{ collection.url }}">
+                  {{ 'facets.clear_all' | t }}
+                </a>
+              </div>
+            {%- else -%}
+              <p class="empty-state__title text-h3">{{ 'collections.empty_title' | t }}</p>
+              <p class="text-ui text-secondary">{{ 'collections.empty_body' | t }}</p>
+              <div class="empty-state__actions">
+                <a class="button button--primary" href="{{ routes.all_products_collection_url }}">
+                  {{ 'collections.all_products' | t }}
+                </a>
+                {%- if settings.business_whatsapp != blank -%}
+                  <a class="button button--secondary" href="https://wa.me/{{ settings.business_whatsapp }}" rel="noopener" target="_blank">
+                    {{ 'store.contact_whatsapp' | t }}
+                  </a>
+                {%- endif -%}
+              </div>
+            {%- endif -%}
+            </div>
+          {%- endif -%}
+        </div>
+      </div>
+    </div>
+  {%- endpaginate -%}
+
+  {%- comment -%} Related categories help both the shopper and internal linking. {%- endcomment -%}
+  {%- assign related = section.blocks | where: 'type', 'related_collection' -%}
+  {%- if related.size > 0 -%}
+    <section class="collection__related">
+      <h2 class="text-h3">{{ 'collections.related_categories' | t }}</h2>
+      <ul class="collection__related-list" role="list">
+        {%- for block in related -%}
+          {%- assign related_collection = collections[block.settings.collection] -%}
+          {%- if related_collection != blank -%}
+            <li {{ block.shopify_attributes }}>
+              <a class="chip" href="{{ related_collection.url }}">{{ related_collection.title }}</a>
+            </li>
+          {%- endif -%}
+        {%- endfor -%}
+      </ul>
+    </section>
+  {%- endif -%}
+
+  {%- comment -%}
+    SEO copy sits BELOW the products, where it helps search engines without pushing the
+    catalogue down the page for a customer who came to buy.
+  {%- endcomment -%}
+  {%- if section.settings.seo_text != blank -%}
+    <section class="collection__seo text-measure">
+      {{ section.settings.seo_text }}
+    </section>
+  {%- endif -%}
+</div>
+
+<script type="module" src="{{ 'facets.js' | asset_url }}"></script>
+
+{% stylesheet %}
+  .empty-state.surface {
+    padding: var(--space-8) var(--space-4);
+  }
+{% endstylesheet %}
+
+{% schema %}
+{
+  "name": "t:names.main_collection",
+  "settings": [
+    { "type": "checkbox", "id": "show_breadcrumbs", "label": "t:labels.show_breadcrumbs", "default": true },
+    {
+      "type": "range",
+      "id": "products_per_page",
+      "min": 12,
+      "max": 48,
+      "step": 4,
+      "label": "t:labels.products_to_show",
+      "default": 24
+    },
+    {
+      "type": "checkbox",
+      "id": "enable_load_more",
+      "label": "t:labels.enable_load_more",
+      "default": true,
+      "info": "t:info.load_more"
+    },
+    { "type": "header", "content": "t:groups.products" },
+    { "type": "checkbox", "id": "show_vendor", "label": "t:labels.show_vendor", "default": true },
+    {
+      "type": "checkbox",
+      "id": "show_rating",
+      "label": "t:labels.show_rating",
+      "default": true,
+      "info": "t:info.reviews_app"
+    },
+    { "type": "checkbox", "id": "show_swatches", "label": "t:labels.show_swatches", "default": true },
+    { "type": "checkbox", "id": "show_quick_add", "label": "t:labels.show_quick_add", "default": true },
+    { "type": "header", "content": "t:groups.seo" },
+    {
+      "type": "richtext",
+      "id": "seo_text",
+      "label": "t:labels.body",
+      "info": "Mostrato sotto i prodotti. Scrivi un testo utile a chi deve scegliere, non un elenco di parole chiave."
+    }
+  ],
+  "blocks": [
+    {
+      "type": "related_collection",
+      "name": "t:labels.collection",
+      "limit": 8,
+      "settings": [{ "type": "collection", "id": "collection", "label": "t:labels.collection" }]
+    }
+  ]
+}
+{% endschema %}

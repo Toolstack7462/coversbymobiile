@@ -1,0 +1,17 @@
+{
+  "$comment": "Italian Tech Atelier - safe automated checks only. No hook here may modify, move or delete a file. Hooks are advisory: they report, they never rewrite.",
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Write|Edit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node .claude/hooks/check-theme-file.mjs",
+            "timeout": 120
+          }
+        ]
+      }
+    ]
+  }
+}

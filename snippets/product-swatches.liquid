@@ -1,0 +1,133 @@
+{% doc %}
+  Renders colour swatches on a product card as links to the corresponding variant.
+
+  ACCESSIBILITY: colour is never the only cue. Every swatch carries the colour name as its
+  accessible name, and the visible "+N" overflow tells the customer more exist rather than
+  silently hiding them.
+
+  On a CARD these are links (navigating to a variant). On the PRODUCT PAGE the variant picker
+  uses real radio inputs instead — see `snippets/variant-picker.liquid`.
+
+  @param {object} product - The product.
+  @param {number} [limit] - Maximum swatches before collapsing into "+N". Defaults to 5.
+
+  @example
+  {% render 'product-swatches', product: product %}
+{% enddoc %}
+
+{%- liquid
+  assign max = limit | default: 5
+  assign swatch_option = null
+
+  # Prefer Shopify's native swatch data. Fall back to matching the option name in Italian or
+  # English so the theme still works on catalogues that predate native swatches.
+  for option in product.options_with_values
+    assign option_name = option.name | downcase
+    if option_name == 'colore' or option_name == 'color' or option_name == 'colour'
+      assign swatch_option = option
+      break
+    endif
+  endfor
+
+  if swatch_option == null
+    for option in product.options_with_values
+      for value in option.values
+        if value.swatch != blank
+          assign swatch_option = option
+          break
+        endif
+      endfor
+      if swatch_option != null
+        break
+      endif
+    endfor
+  endif
+-%}
+
+{%- if swatch_option != null and swatch_option.values.size > 1 -%}
+  <ul class="swatches" role="list" aria-label="{{ swatch_option.name }}">
+    {%- for value in swatch_option.values limit: max -%}
+      {%- liquid
+        assign variant_url = product.url | append: '?variant=' | append: value.variant.id
+        assign swatch_style = ''
+        if value.swatch.color
+          assign swatch_style = 'background-color: ' | append: value.swatch.color | append: ';'
+        elsif value.swatch.image
+          assign swatch_url = value.swatch.image | image_url: width: 40
+          assign swatch_style = 'background-image: url(' | append: swatch_url | append: ');'
+        endif
+      -%}
+      <li>
+        <a
+          class="swatch{% unless value.available %} swatch--unavailable{% endunless %}"
+          href="{{ variant_url }}"
+          {% if swatch_style != blank %}
+            style="{{ swatch_style }}"
+          {% endif %}
+          data-swatch-value="{{ value | escape }}"
+        >
+          <span class="visually-hidden">
+            {{- value -}}
+            {%- unless value.available %} — {{ 'products.variant_unavailable' | t: value: value }}{% endunless -%}
+          </span>
+        </a>
+      </li>
+    {%- endfor -%}
+
+    {%- if swatch_option.values.size > max -%}
+      {%- assign remaining = swatch_option.values.size | minus: max -%}
+      <li>
+        <a class="swatch swatch--more text-caption tabular" href="{{ product.url }}">
+          +{{ remaining }}
+          <span class="visually-hidden">{{ 'general.actions.see_all' | t }}</span>
+        </a>
+      </li>
+    {%- endif -%}
+  </ul>
+{%- endif -%}
+
+{% stylesheet %}
+  .swatches {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-2);
+    list-style: none;
+  }
+
+  .swatch {
+    display: block;
+    /* 20px visual dot, but the tap target is expanded to 44px below so the control meets the
+       minimum target size without inflating the visual design. */
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    border: var(--border-width) solid var(--color-border-strong);
+    background-color: var(--color-surface-sunken);
+    background-size: cover;
+    background-position: center;
+    position: relative;
+  }
+
+  .swatch::after {
+    content: '';
+    position: absolute;
+    /* Expands the hit area to 44x44 without changing layout. */
+    inset: -12px;
+  }
+
+  .swatch--unavailable {
+    opacity: 0.4;
+  }
+
+  .swatch--more {
+    display: grid;
+    place-items: center;
+    width: auto;
+    min-width: 20px;
+    padding-inline: var(--space-1);
+    border-radius: var(--radius-chip);
+    color: var(--color-text-secondary);
+    text-decoration: none;
+    background-color: transparent;
+  }
+{% endstylesheet %}

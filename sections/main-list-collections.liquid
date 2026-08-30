@@ -1,0 +1,62 @@
+{% comment %}
+  All collections.
+{% endcomment %}
+
+<div class="page section">
+  {% render 'breadcrumbs' %}
+
+  <header class="section-head">
+    <div>
+      <h1 class="text-h1">{{ 'collections.title' | t }}</h1>
+    </div>
+  </header>
+
+  {%- if collections.size > 0 -%}
+    <ul class="cats" role="list" style="--cats-columns: 4;">
+      {%- for collection in collections -%}
+        <li>
+          <a class="cat" href="{{ collection.url }}">
+            <div class="cat__media">
+              {%- if collection.featured_image -%}
+                <div class="media">
+                  <img
+                    src="{{ collection.featured_image | image_url: width: 400 }}"
+                    srcset="
+                      {{ collection.featured_image | image_url: width: 200 }} 200w,
+                      {{ collection.featured_image | image_url: width: 400 }} 400w
+                    "
+                    sizes="(min-width: 990px) 240px, 40vw"
+                    alt=""
+                    width="{{ collection.featured_image.width }}"
+                    height="{{ collection.featured_image.height }}"
+                    loading="lazy"
+                  >
+                </div>
+              {%- else -%}
+                <div class="media media--empty">
+                  {% render 'icon', name: 'package', class: 'icon--lg' %}
+                </div>
+              {%- endif -%}
+            </div>
+            <span class="cat__title text-ui">{{ collection.title }}</span>
+            <span class="cat__sub text-caption text-secondary">
+              {{- 'collections.product_count' | t: count: collection.products_count -}}
+            </span>
+          </a>
+        </li>
+      {%- endfor -%}
+    </ul>
+  {%- else -%}
+    <div class="empty-state surface">
+      {% render 'icon', name: 'grid', class: 'icon--xl' %}
+      <p class="empty-state__title text-h3">{{ 'collections.empty_title' | t }}</p>
+    </div>
+  {%- endif -%}
+</div>
+
+{% schema %}
+{
+  "name": "t:names.main_list_collections",
+  "settings": []
+}
+{% endschema %}

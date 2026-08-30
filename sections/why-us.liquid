@@ -1,0 +1,129 @@
+{% comment %}
+  Reasons to buy here.
+
+  Every claim is a merchant-authored block. The theme ships no default claims, because a trust
+  section is exactly where a template's placeholder copy ("Free shipping worldwide! 24/7
+  support!") turns into a promise the shop never made.
+
+  No fabricated statistics: no customer counts, no years in business, no review scores, no
+  awards. If the merchant has a real number they can type it.
+{% endcomment %}
+
+{%- if section.blocks.size > 0 -%}
+  <section class="section">
+    <div class="page">
+      {%- if section.settings.heading != blank -%}
+        <header class="section-head">
+          <div>
+            {%- if section.settings.eyebrow != blank -%}
+              <p class="eyebrow">{{ section.settings.eyebrow }}</p>
+            {%- endif -%}
+            <h2 class="text-h2">{{ section.settings.heading }}</h2>
+          </div>
+        </header>
+      {%- endif -%}
+
+      <ul class="reasons" role="list">
+        {%- for block in section.blocks -%}
+          {%- if block.settings.heading != blank -%}
+            <li class="reason" {{ block.shopify_attributes }}>
+              {%- if block.settings.icon != 'none' -%}
+                <span class="reason__icon">
+                  {% render 'icon', name: block.settings.icon, class: 'icon--lg' %}
+                </span>
+              {%- endif -%}
+              <h3 class="reason__title text-ui">{{ block.settings.heading }}</h3>
+              {%- if block.settings.body != blank -%}
+                <p class="reason__body text-ui text-secondary">{{ block.settings.body }}</p>
+              {%- endif -%}
+            </li>
+          {%- endif -%}
+        {%- endfor -%}
+      </ul>
+    </div>
+  </section>
+{%- endif -%}
+
+{% stylesheet %}
+  .reasons {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: var(--space-5);
+    list-style: none;
+  }
+
+  .reason {
+    display: grid;
+    gap: var(--space-2);
+    align-content: start;
+  }
+
+  .reason__icon {
+    display: grid;
+    place-items: center;
+    width: 48px;
+    height: 48px;
+    border-radius: var(--radius-control);
+    background-color: var(--color-primary-surface);
+    color: var(--color-primary);
+  }
+
+  .reason__title {
+    margin: 0;
+    font-family: var(--font-heading);
+    font-size: var(--text-body);
+    font-weight: var(--weight-heading);
+  }
+
+  .reason__body {
+    margin: 0;
+  }
+{% endstylesheet %}
+
+{% schema %}
+{
+  "name": "t:names.why_us",
+  "tag": "section",
+  "class": "why-us-section",
+  "max_blocks": 6,
+  "settings": [
+    { "type": "text", "id": "eyebrow", "label": "t:labels.eyebrow" },
+    { "type": "text", "id": "heading", "label": "t:labels.heading" },
+    { "type": "paragraph", "content": "t:info.no_fake_data" }
+  ],
+  "blocks": [
+    {
+      "type": "reason",
+      "name": "Motivo",
+      "settings": [
+        { "type": "text", "id": "heading", "label": "t:labels.heading" },
+        { "type": "text", "id": "body", "label": "t:labels.body" },
+        {
+          "type": "select",
+          "id": "icon",
+          "label": "t:labels.icon",
+          "default": "shield-check",
+          "options": [
+            { "value": "none", "label": "Nessuna" },
+            { "value": "store", "label": "Negozio" },
+            { "value": "truck", "label": "Spedizione" },
+            { "value": "shield-check", "label": "Garanzia" },
+            { "value": "device", "label": "Compatibilita" },
+            { "value": "whatsapp", "label": "Assistenza" },
+            { "value": "refresh", "label": "Resi" },
+            { "value": "package", "label": "Ritiro" },
+            { "value": "zap", "label": "Ricarica" }
+          ]
+        }
+      ]
+    }
+  ],
+  "presets": [
+    {
+      "name": "t:names.why_us",
+      "category": "t:categories.trust",
+      "blocks": [{ "type": "reason" }, { "type": "reason" }, { "type": "reason" }]
+    }
+  ]
+}
+{% endschema %}

@@ -1,0 +1,14 @@
+name,brand_handle,family_handle,model_year,aliases,active,sort_order
+iPhone 16 Pro Max,apple,iphone-pro,2024,"iPhone16ProMax, iphone 16 promax, A3084",true,10
+iPhone 16 Pro,apple,iphone-pro,2024,"iPhone16Pro, iphone 16pro, A3083",true,20
+iPhone 16,apple,iphone,2024,"iPhone16, A3081",true,30
+iPhone 15 Pro Max,apple,iphone-pro,2023,"iPhone15ProMax, A3108",true,40
+iPhone 15,apple,iphone,2023,"iPhone15, A3090",true,50
+Galaxy S25 Ultra,samsung,galaxy-s,2025,"S25 Ultra, S 25 Ultra, SM-S938B, s25ultra",true,10
+Galaxy S25+,samsung,galaxy-s,2025,"S25 Plus, S25+, SM-S936B",true,20
+Galaxy S25,samsung,galaxy-s,2025,"S25, SM-S931B",true,30
+Galaxy A56,samsung,galaxy-a,2025,"A56, SM-A566B",true,40
+Pixel 9 Pro XL,google-pixel,pixel-pro,2024,"Pixel9ProXL, pixel 9 pro xl",true,10
+Pixel 9,google-pixel,pixel,2024,"Pixel9",true,20
+Redmi Note 14 Pro,xiaomi,redmi-note,2025,"Note 14 Pro, RedmiNote14Pro",true,10
+Nothing Phone (3),nothing,nothing-phone,2025,"Nothing Phone 3, NothingPhone3",true,10

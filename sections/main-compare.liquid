@@ -1,0 +1,80 @@
+{% comment %}
+  Product comparison page.
+
+  Rows are CATEGORY-SPECIFIC: chargers compare wattage, ports, PD, PPS, GaN and cable; power
+  banks compare capacity, output, weight, ports and Qi2; cases compare material, protection,
+  magnetic compatibility and weight. Comparing a charger against a case would produce a table of
+  blanks, so the comparison is restricted to one category at a time.
+
+  The table is built on the client from products the customer added, then filled with
+  server-rendered data fetched per product. Values come from the same metafields the product page
+  uses; nothing is estimated.
+{% endcomment %}
+
+<div class="comparepage page">
+  {% render 'breadcrumbs' %}
+
+  <header class="comparepage__header">
+    <h1 class="text-h1">{{ 'compare.title' | t }}</h1>
+    <p class="text-ui text-secondary">{{ 'wishlist.local_only_note' | t }}</p>
+  </header>
+
+  <compare-table data-compare-table>
+    <div class="comparepage__empty empty-state surface" data-compare-empty>
+      {% render 'icon', name: 'compare', class: 'icon--xl' %}
+      <p class="empty-state__title text-h3">{{ 'compare.empty_title' | t }}</p>
+      <p class="text-ui text-secondary">{{ 'compare.empty_body' | t }}</p>
+      <div class="empty-state__actions">
+        <a class="button button--primary" href="{{ routes.all_products_collection_url }}">
+          {{ 'general.actions.continue_shopping' | t }}
+        </a>
+      </div>
+    </div>
+
+    <div class="comparepage__results" data-compare-results hidden>
+      <div class="comparepage__toolbar">
+        <button class="button button--secondary button--small" type="button" data-compare-clear-all>
+          {% render 'icon', name: 'trash', class: 'icon--sm' %}
+          {{ 'compare.clear' | t }}
+        </button>
+      </div>
+
+      {%- comment -%} A wide table scrolls inside its own container, never the page. {%- endcomment -%}
+      <div class="scroll-x">
+        <div data-compare-target></div>
+      </div>
+    </div>
+  </compare-table>
+</div>
+
+<script type="module" src="{{ 'compare-page.js' | asset_url }}"></script>
+
+{% stylesheet %}
+  .comparepage {
+    padding-block: var(--space-5) var(--space-8);
+  }
+
+  .comparepage__header {
+    display: grid;
+    gap: var(--space-2);
+    margin-block-end: var(--space-5);
+  }
+
+  .comparepage__header h1 {
+    margin: 0;
+  }
+
+  .comparepage__toolbar {
+    display: flex;
+    justify-content: flex-end;
+    margin-block-end: var(--space-3);
+  }
+
+{% endstylesheet %}
+
+{% schema %}
+{
+  "name": "t:names.compare",
+  "settings": []
+}
+{% endschema %}

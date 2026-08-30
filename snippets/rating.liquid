@@ -1,0 +1,91 @@
+{% doc %}
+  Renders a star rating.
+
+  INTEGRITY RULE: renders NOTHING unless a reviews source has supplied a real rating and a real
+  review count. A product with no reviews shows no stars — never a row of empty stars, never a
+  default score. Fabricated ratings are an unfair commercial practice and would also poison
+  AggregateRating structured data.
+
+  Reads the conventional `reviews.rating` / `reviews.rating_count` metafields, which Shopify's
+  own review apps and most third-party apps write to.
+
+  @param {object} product - The product.
+  @param {boolean} [show_count] - Append the review count. Defaults to true.
+  @param {string} [size] - 'sm' for product cards.
+
+  @example
+  {% render 'rating', product: product %}
+{% enddoc %}
+
+{%- liquid
+  assign rating = product.metafields.reviews.rating.value
+  assign count = product.metafields.reviews.rating_count.value | plus: 0
+
+  assign has_rating = false
+  if rating != blank and count > 0
+    assign has_rating = true
+  endif
+-%}
+
+{%- if has_rating -%}
+  {%- liquid
+    assign score = rating.rating | times: 1.0
+    assign scale = rating.scale_max | default: 5
+    assign rounded = score | round
+    assign classes = 'rating'
+    if size == 'sm'
+      assign classes = classes | append: ' rating--sm'
+    endif
+  -%}
+
+  <div class="{{ classes }}">
+    <span class="rating__stars" aria-hidden="true">
+      {%- for i in (1..scale) -%}
+        {%- if i <= rounded -%}
+          {% render 'icon', name: 'star-filled', class: 'rating__star rating__star--on' %}
+        {%- else -%}
+          {% render 'icon', name: 'star', class: 'rating__star' %}
+        {%- endif -%}
+      {%- endfor -%}
+    </span>
+
+    <span class="visually-hidden">
+      {{- 'general.accessibility.star_rating' | t: rating: score, max: scale -}}
+    </span>
+
+    {%- if show_count != false -%}
+      <span class="rating__count text-caption text-secondary tabular" aria-hidden="true">
+        {{- score | round: 1 }} ({{ count }})
+      </span>
+    {%- endif -%}
+  </div>
+{%- endif -%}
+
+{% stylesheet %}
+  .rating {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-2);
+  }
+
+  .rating__stars {
+    display: inline-flex;
+    gap: 1px;
+    color: var(--color-warning);
+  }
+
+  .rating__star {
+    width: 0.875rem;
+    height: 0.875rem;
+    stroke-width: 1.4;
+  }
+
+  .rating__star--on {
+    stroke: none;
+  }
+
+  .rating--sm .rating__star {
+    width: 0.75rem;
+    height: 0.75rem;
+  }
+{% endstylesheet %}

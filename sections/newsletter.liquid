@@ -1,0 +1,159 @@
+{% comment %}
+  Newsletter sign-up.
+
+  IT IS A SECTION, NOT A POPUP. It never interrupts, never covers the first product view and
+  never appears on entry. A modal that blocks a customer before they have seen a single product
+  is the fastest way to lose them, and under GDPR consent obtained by obstruction is weak
+  consent anyway.
+
+  Uses Shopify's native customer form, so addresses land in Shopify with no third-party script.
+{% endcomment %}
+
+<section class="section newsletter">
+  <div class="page">
+    <div class="newsletter__inner">
+      <div class="newsletter__content">
+        {%- if section.settings.eyebrow != blank -%}
+          <p class="eyebrow">{{ section.settings.eyebrow }}</p>
+        {%- endif -%}
+        <h2 class="text-h2">{%- if section.settings.heading != blank -%}{{ section.settings.heading }}{%- else -%}{{ 'newsletter.title' | t }}{%- endif -%}</h2>
+        <p class="text-body">{%- if section.settings.body != blank -%}{{ section.settings.body }}{%- else -%}{{ 'newsletter.body' | t }}{%- endif -%}</p>
+      </div>
+
+      <div class="newsletter__form-wrap">
+        {%- form 'customer', class: 'newsletter__form' -%}
+          <input type="hidden" name="contact[tags]" value="newsletter">
+
+          <label class="visually-hidden" for="newsletter-email">
+            {{- 'newsletter.email_label' | t -}}
+          </label>
+
+          <div class="newsletter__row">
+            <input
+              class="input"
+              id="newsletter-email"
+              type="email"
+              name="contact[email]"
+              placeholder="{{ 'newsletter.email_placeholder' | t }}"
+              autocomplete="email"
+              required
+              {% if form.errors %}
+                aria-invalid="true"
+                aria-describedby="newsletter-error"
+              {% endif %}
+            >
+            <button class="button button--primary" type="submit">
+              {{ 'newsletter.submit' | t }}
+            </button>
+          </div>
+
+          {%- if form.posted_successfully? -%}
+            <p class="newsletter__message newsletter__message--success text-ui" role="status">
+              {% render 'icon', name: 'check-circle', class: 'icon--sm' %}
+              {{ 'newsletter.success' | t }}
+            </p>
+          {%- elsif form.errors -%}
+            <p class="newsletter__message newsletter__message--error text-ui" id="newsletter-error" role="alert">
+              {% render 'icon', name: 'alert-circle', class: 'icon--sm' %}
+              {{ 'forms.error_email' | t }}
+            </p>
+          {%- endif -%}
+
+          {%- if settings.privacy_policy_page != blank -%}
+            <p class="text-caption newsletter__privacy">
+              <a href="{{ settings.privacy_policy_page.url }}">{{ 'newsletter.privacy_note' | t }}</a>
+            </p>
+          {%- endif -%}
+        {%- endform -%}
+      </div>
+    </div>
+  </div>
+</section>
+
+{% stylesheet %}
+  .newsletter__inner {
+    display: grid;
+    gap: var(--space-5);
+    padding: var(--space-6);
+    background-color: var(--color-ink);
+    color: var(--color-surface);
+    border-radius: var(--radius-editorial);
+  }
+
+  .newsletter__content {
+    display: grid;
+    gap: var(--space-2);
+    align-content: center;
+  }
+
+  .newsletter__content h2 {
+    margin: 0;
+  }
+
+  .newsletter__content p {
+    margin: 0;
+    color: rgb(255 255 255 / 0.72);
+  }
+
+  .newsletter__form-wrap {
+    align-self: center;
+  }
+
+  .newsletter__row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-2);
+  }
+
+  .newsletter__row .input {
+    flex: 1;
+    min-width: 200px;
+  }
+
+  .newsletter__message {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    margin-block-start: var(--space-3);
+  }
+
+  /* White, not lime — see the footer. Lime is device context only. */
+  .newsletter__message--success {
+    color: var(--color-surface);
+    font-weight: var(--weight-semibold);
+  }
+
+  .newsletter__message--error {
+    color: var(--color-surface);
+    background-color: var(--color-danger);
+    padding: var(--space-2) var(--space-3);
+    border-radius: var(--radius-control);
+  }
+
+  .newsletter__privacy {
+    margin-block-start: var(--space-3);
+    color: rgb(255 255 255 / 0.6);
+  }
+
+  @media (min-width: 990px) {
+    .newsletter__inner {
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+      gap: var(--space-7);
+      padding: var(--space-7);
+    }
+  }
+{% endstylesheet %}
+
+{% schema %}
+{
+  "name": "t:names.newsletter",
+  "tag": "section",
+  "class": "newsletter-section",
+  "settings": [
+    { "type": "text", "id": "eyebrow", "label": "t:labels.eyebrow" },
+    { "type": "text", "id": "heading", "label": "t:labels.heading" },
+    { "type": "text", "id": "body", "label": "t:labels.body" }
+  ],
+  "presets": [{ "name": "t:names.newsletter", "category": "t:categories.editorial" }]
+}
+{% endschema %}

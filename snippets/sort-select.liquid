@@ -1,0 +1,72 @@
+{% doc %}
+  Sort control.
+
+  Options come from Shopify's `sort_options` for the collection or search, so only sorts that
+  genuinely apply are offered. "Best selling" reflects real Shopify sales data — the theme never
+  labels anything a bestseller on its own.
+
+  The control is a real `<select>` inside a form with a submit button, so sorting works without
+  JavaScript. `facets.js` submits it on change and hides the button.
+
+  @param {object} results - `collection` or `search`.
+
+  @example
+  {% render 'sort-select', results: collection %}
+{% enddoc %}
+
+{%- liquid
+  assign sort_by = results.sort_by | default: results.default_sort_by
+-%}
+
+<div class="sort">
+  <label class="sort__label text-ui" for="sort-by">{{ 'facets.sort_label' | t }}</label>
+  <select class="select sort__select" id="sort-by" name="sort_by" form="" data-sort-select>
+    {%- for option in results.sort_options -%}
+      <option value="{{ option.value }}" {% if option.value == sort_by %}selected{% endif %}>
+        {{- option.name -}}
+      </option>
+    {%- endfor -%}
+  </select>
+  <noscript>
+    <button class="button button--secondary button--small" type="submit">
+      {{ 'general.actions.apply' | t }}
+    </button>
+  </noscript>
+</div>
+
+{% stylesheet %}
+  .sort {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+  }
+
+  .sort__label {
+    white-space: nowrap;
+    color: var(--color-text-secondary);
+  }
+
+  .sort__select {
+    min-height: var(--target-min);
+    padding-block: var(--space-2);
+    width: auto;
+    min-width: 180px;
+  }
+
+  @media (max-width: 749px) {
+    .sort__label {
+      /* The select's own accessible name carries the meaning on small screens. */
+      position: absolute !important;
+      width: 1px;
+      height: 1px;
+      overflow: hidden;
+      clip-path: inset(50%);
+      white-space: nowrap;
+    }
+
+    .sort__select {
+      min-width: 0;
+      max-width: 160px;
+    }
+  }
+{% endstylesheet %}

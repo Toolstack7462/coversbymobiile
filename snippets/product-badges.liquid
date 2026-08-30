@@ -1,0 +1,90 @@
+{% doc %}
+  Renders at most TWO product badges, in a fixed priority order.
+
+  INTEGRITY RULES:
+  - "Offerta" is derived from real price data (compare_at_price above price), never from a tag.
+  - "Novita" and "Piu venduto" come from explicit merchant metafields. A bestseller badge is a
+    merchandising claim, so it must be a deliberate merchant decision — never inferred from a
+    collection name or applied by default.
+  - The cap of two is deliberate: three or more badges stop being signal and start being noise,
+    and they crowd out the compatibility line, which matters far more to this customer.
+
+  Priority: sale, then new, then bestseller.
+
+  @param {object} product - The product.
+  @param {object} [variant] - Variant to price-check. Defaults to the selected/first available.
+
+  @example
+  {% render 'product-badges', product: product %}
+{% enddoc %}
+
+{%- liquid
+  assign target = variant | default: product.selected_or_first_available_variant
+  assign price = target.price | default: product.price
+  assign compare_at = target.compare_at_price | default: product.compare_at_price
+
+  assign badges = ''
+
+  if compare_at != blank and compare_at > price
+    assign badges = badges | append: 'sale,'
+  endif
+  if product.metafields.custom.is_new.value == true
+    assign badges = badges | append: 'new,'
+  endif
+  if product.metafields.custom.is_bestseller.value == true
+    assign badges = badges | append: 'bestseller,'
+  endif
+
+  assign badge_list = badges | split: ','
+-%}
+
+{%- if badge_list.size > 0 -%}
+  <ul class="badges" role="list" aria-label="{{ 'products.badge_group' | t }}">
+    {%- for badge in badge_list limit: 2 -%}
+      <li class="badge badge--{{ badge }}">
+        {%- case badge -%}
+          {%- when 'sale' -%}{{ 'products.on_sale' | t }}
+          {%- when 'new' -%}{{ 'products.new' | t }}
+          {%- when 'bestseller' -%}{{ 'products.bestseller' | t }}
+        {%- endcase -%}
+      </li>
+    {%- endfor -%}
+  </ul>
+{%- endif -%}
+
+{% stylesheet %}
+  .badges {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-1);
+    list-style: none;
+  }
+
+  .badge {
+    display: inline-flex;
+    align-items: center;
+    padding: var(--space-half) var(--space-2);
+    border-radius: var(--radius-chip);
+    font-size: var(--text-caption);
+    line-height: var(--text-caption-lh);
+    font-weight: var(--weight-semibold);
+    letter-spacing: 0.01em;
+    white-space: nowrap;
+  }
+
+  .badge--sale {
+    background-color: var(--color-danger);
+    color: var(--color-surface);
+  }
+
+  .badge--new {
+    background-color: var(--color-ink);
+    color: var(--color-surface);
+  }
+
+  .badge--bestseller {
+    background-color: var(--color-surface);
+    border: var(--border-width) solid var(--color-border-strong);
+    color: var(--color-ink);
+  }
+{% endstylesheet %}

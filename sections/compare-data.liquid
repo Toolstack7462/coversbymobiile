@@ -1,0 +1,134 @@
+{% comment %}
+  Server-rendered comparison table, fetched by compare-page.js through the search endpoint:
+  /search?q=id:1 OR id:2&type=product&section_id=compare-data
+
+  Rendered on the server because comparison rows come from product METAFIELDS, and the
+  /products/<handle>.js endpoint does not expose those. Reading them here keeps one source of
+  truth with the product page and avoids inventing a second data path.
+
+  Rows are chosen by the category of the FIRST product, since the comparison is restricted to a
+  single category. Row labels are translation keys resolved by `snippets/spec-label.liquid`, so
+  the table is translatable; values are merchant data shown as entered.
+{% endcomment %}
+
+{%- liquid
+  assign items = search.results | where: 'object_type', 'product'
+  assign first = items.first
+  assign category = first.metafields.custom.accessory_type.value | default: '' | downcase
+
+  # Category-specific row definitions: "label§metafield_key§suffix"
+  case category
+    when 'charger', 'caricatore'
+      assign rows = 'total_output§wattage_w§ W|port_count§port_count§|usb_pd§usb_pd§|pps§pps_supported§|gan§gan§|cable_included§cable_included§|plug_type§plug_type§'
+    when 'powerbank', 'power_bank', 'power bank'
+      assign rows = 'capacity§capacity_mah§ mAh|max_output§wattage_w§ W|ports§port_count§|wireless_charging§wireless_charging§|qi2§qi2_certified§|magnetic§magsafe_compatible§|weight§weight_g§ g'
+    when 'case', 'cover'
+      assign rows = 'material§material§|protection_level§protection_level§|magnetic§magsafe_compatible§|wireless_charging§wireless_charging§|weight§weight_g§ g|colour§colour_family§'
+    when 'cable', 'cavo'
+      assign rows = 'connector_a§connector_input§|connector_b§connector_output§|length§cable_length§|max_power§wattage_w§ W|data_speed§data_speed§|pack_quantity§pack_quantity§'
+    when 'screen_protector', 'vetro', 'pellicola'
+      assign rows = 'material§material§|hardness§hardness§|privacy§privacy_filter§|anti_glare§anti_glare§|edge_coverage§edge_coverage§|installation_kit§installation_kit§'
+    else
+      assign rows = 'material§material§|weight§weight_g§ g|compatibility§compatibility_level§'
+  endcase
+
+  assign row_list = rows | split: '|'
+-%}
+
+{%- if items.size > 0 -%}
+  <table class="compare-table" data-compare-rendered>
+    <caption class="visually-hidden">{{ 'compare.title' | t }}</caption>
+
+    <thead>
+      <tr>
+        <th scope="col"><span class="visually-hidden">{{ 'products.specifications' | t }}</span></th>
+        {%- for item in items -%}
+          <th scope="col">
+            {%- if item.featured_media -%}
+              <img
+                class="compare-head__media"
+                src="{{ item.featured_media | image_url: width: 280 }}"
+                alt="{{ item.featured_media.alt | default: item.title | escape }}"
+                width="140"
+                height="140"
+                loading="lazy"
+              >
+            {%- endif -%}
+            <a class="compare-head__title" href="{{ item.url }}">{{ item.title }}</a>
+            <button
+              class="compare-head__remove text-caption"
+              type="button"
+              data-compare-remove="{{ item.handle }}"
+            >
+              {{ 'compare.remove_item' | t: title: item.title }}
+            </button>
+          </th>
+        {%- endfor -%}
+      </tr>
+    </thead>
+
+    <tbody>
+      {%- comment -%} Price first: it is what the comparison ultimately resolves to. {%- endcomment -%}
+      <tr>
+        <th scope="row">{{ 'price.regular' | t }}</th>
+        {%- for item in items -%}
+          <td>{{ item.price | money }}</td>
+        {%- endfor -%}
+      </tr>
+
+      <tr>
+        <th scope="row">{{ 'inventory.in_stock' | t }}</th>
+        {%- for item in items -%}
+          <td>
+            {%- if item.available -%}
+              {{ 'inventory.in_stock' | t }}
+            {%- else -%}
+              {{ 'inventory.out_of_stock' | t }}
+            {%- endif -%}
+          </td>
+        {%- endfor -%}
+      </tr>
+
+      {%- for row in row_list -%}
+        {%- liquid
+          assign parts = row | split: '§'
+          assign label = parts[0]
+          assign key = parts[1]
+          assign suffix = parts[2]
+
+          # Skip a row entirely when no product in the comparison has a value for it: an all-blank
+          # row is noise that makes the table look broken.
+          assign has_any = false
+          for item in items
+            if item.metafields.custom[key].value != blank
+              assign has_any = true
+              break
+            endif
+          endfor
+        -%}
+        {%- if has_any -%}
+          <tr>
+            <th scope="row">{% render 'spec-label', key: label %}</th>
+            {%- for item in items -%}
+              {%- assign value = item.metafields.custom[key].value -%}
+              <td>
+                {%- if value != blank -%}
+                  {{ value }}{{ suffix }}
+                {%- else -%}
+                  <span class="text-secondary" aria-label="{{ 'specs.not_specified' | t }}">&mdash;</span>
+                {%- endif -%}
+              </td>
+            {%- endfor -%}
+          </tr>
+        {%- endif -%}
+      {%- endfor -%}
+    </tbody>
+  </table>
+{%- endif -%}
+
+{% schema %}
+{
+  "name": "Dati confronto",
+  "settings": []
+}
+{% endschema %}

@@ -1,0 +1,208 @@
+{% doc %}
+  Emits the Italian Tech Atelier design tokens as CSS custom properties, plus the self-hosted
+  font faces.
+
+  This is the ONLY file in the theme permitted to contain literal colour values. Every section,
+  snippet and stylesheet must consume `var(--color-*)`. The write guard in
+  `.claude/hooks/check-theme-file.mjs` enforces this.
+
+  Rendered once, in `<head>`, before any other stylesheet.
+
+  @example
+  {% render 'theme-tokens' %}
+{% enddoc %}
+
+{%- if settings.font_self_hosted -%}
+  {%- comment -%}
+    Self-hosted variable fonts. Inter and Manrope are both SIL Open Font License 1.1, which
+    permits self-hosting and redistribution. Latin + Latin Extended subsets are loaded so Italian
+    accented characters (à è é ì ò ù) render from the webfont rather than falling back mid-word.
+  {%- endcomment -%}
+  <style>
+    @font-face {
+      font-family: 'Inter Variable';
+      font-style: normal;
+      font-weight: 400 700;
+      font-display: swap;
+      src: url('{{ "inter-latin-ext.woff2" | asset_url }}') format('woff2');
+      unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+    }
+    @font-face {
+      font-family: 'Inter Variable';
+      font-style: normal;
+      font-weight: 400 700;
+      font-display: swap;
+      src: url('{{ "inter-latin.woff2" | asset_url }}') format('woff2');
+      unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+    }
+    @font-face {
+      font-family: 'Manrope Variable';
+      font-style: normal;
+      font-weight: 600 800;
+      font-display: swap;
+      src: url('{{ "manrope-latin-ext.woff2" | asset_url }}') format('woff2');
+      unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+    }
+    @font-face {
+      font-family: 'Manrope Variable';
+      font-style: normal;
+      font-weight: 600 800;
+      font-display: swap;
+      src: url('{{ "manrope-latin.woff2" | asset_url }}') format('woff2');
+      unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+    }
+  </style>
+{%- endif -%}
+
+<style>
+  :root {
+    /* ── Brand palette ───────────────────────────────────────────────────
+       Merchant-adjustable via Theme settings > Colori. Defaults are the
+       Italian Tech Atelier art direction and should rarely change. */
+    --color-ink: {{ settings.color_ink | default: '#0B1220' }};
+    --color-primary: {{ settings.color_primary | default: '#2457FF' }};
+    --color-primary-hover: {{ settings.color_primary_hover | default: '#1743D3' }};
+    --color-accent: {{ settings.color_accent | default: '#B9F227' }};
+    --color-background: {{ settings.color_background | default: '#F7F8F5' }};
+    --color-surface: {{ settings.color_surface | default: '#FFFFFF' }};
+    --color-text-secondary: {{ settings.color_text_secondary | default: '#667085' }};
+    --color-border: {{ settings.color_border | default: '#DDE3EA' }};
+    --color-success: {{ settings.color_success | default: '#15845A' }};
+    --color-danger: {{ settings.color_danger | default: '#D92D20' }};
+    --color-warning: {{ settings.color_warning | default: '#B54708' }};
+
+    /* Derived surfaces. Kept as explicit values rather than colour-mix() so
+       the palette stays predictable and contrast stays auditable. */
+    --color-ink-80: #33404F;
+    --color-ink-60: #5C6675;
+    --color-surface-sunken: #F0F2EF;
+    --color-border-strong: #C3CCD6;
+    --color-success-surface: #E7F4EE;
+    --color-danger-surface: #FDECEA;
+    --color-warning-surface: #FDF3E8;
+    --color-accent-surface: #F2FBD9;
+    --color-primary-surface: #EDF2FF;
+
+    /* Text variants of the status colours.
+       The brand values above are the palette specified for the project and are correct as
+       FILLS (white on --color-danger measures 4.83:1). As TEXT on a light surface they fall
+       just short of AA: #15845A on porcelain is 4.40:1 and #D92D20 on its own tint is 4.22:1,
+       both measured by the axe run in tests/a11y.spec.js. These variants are ~5% darker and
+       clear 4.5:1 on porcelain, white and their own tint. Use them wherever the colour carries
+       text; use the brand tokens for fills, borders and icons. */
+    --color-success-text: #147D56;
+    --color-danger-text: #D02B1F;
+    --color-warning-text: #B54708;
+    --color-focus: var(--color-primary);
+
+    /* ── Typography ──────────────────────────────────────────────────────
+       Manrope for headings, Inter for body and UI. The fallback stacks are
+       metric-adjacent so the swap does not shift layout. */
+    --font-heading: 'Manrope Variable', 'Manrope', ui-sans-serif, system-ui, -apple-system,
+      'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+    --font-body: 'Inter Variable', 'Inter', ui-sans-serif, system-ui, -apple-system,
+      'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+
+    --weight-regular: 400;
+    --weight-medium: 500;
+    --weight-semibold: 600;
+    --weight-bold: 700;
+    --weight-heading: 700;
+    --weight-display: 800;
+
+    /* Fluid where it helps, fixed where the brief specifies exact steps.
+       clamp() interpolates between the mobile and desktop values from the
+       type scale rather than inventing intermediate sizes. */
+    --text-display: clamp(2.125rem, 1.55rem + 2.6vw, 3rem);      /* 34 → 48 */
+    --text-display-lh: clamp(2.5rem, 1.95rem + 2.4vw, 3.5rem);   /* 40 → 56 */
+    --text-h1: clamp(1.875rem, 1.5rem + 1.6vw, 2.5rem);          /* 30 → 40 */
+    --text-h1-lh: clamp(2.25rem, 1.9rem + 1.5vw, 3rem);          /* 36 → 48 */
+    --text-h2: clamp(1.625rem, 1.4rem + 1vw, 2rem);              /* 26 → 32 */
+    --text-h2-lh: clamp(2rem, 1.75rem + 1vw, 2.5rem);            /* 32 → 40 */
+    --text-h3: 1.5rem;                                            /* 24 */
+    --text-h3-lh: 2rem;                                           /* 32 */
+    --text-body: 1rem;                                            /* 16 */
+    --text-body-lh: 1.5rem;                                       /* 24 */
+    --text-ui: 0.875rem;                                          /* 14 */
+    --text-ui-lh: 1.25rem;                                        /* 20 */
+    --text-caption: 0.75rem;                                      /* 12 */
+    --text-caption-lh: 1rem;                                      /* 16 */
+    --text-price: clamp(1.25rem, 1.1rem + 0.6vw, 1.5rem);        /* 20 → 24 */
+    --text-price-lh: clamp(1.625rem, 1.5rem + 0.5vw, 1.875rem);  /* 26 → 30 */
+
+    /* ── Spacing: strict 8-point system ─────────────────────────────────── */
+    /* Sub-grid step. The 8-point system does not go below 4px, but chips and badges genuinely
+       need optical padding under that. One named token beats 1/2/3/5px scattered around. */
+    --space-half: 0.125rem; /* 2 */
+    --space-1: 0.25rem;   /*  4 */
+    --space-2: 0.5rem;    /*  8 */
+    --space-3: 0.75rem;   /* 12 */
+    --space-4: 1rem;      /* 16 */
+    --space-5: 1.5rem;    /* 24 */
+    --space-6: 2rem;      /* 32 */
+    --space-7: 3rem;      /* 48 */
+    --space-8: 4rem;      /* 64 */
+    --space-9: 5rem;      /* 80 */
+
+    /* ── Layout ─────────────────────────────────────────────────────────── */
+    --page-width: {{ settings.page_width | default: 1440 }}px;
+    --gutter: var(--space-4);            /* 16 mobile */
+    --header-height: 64px;
+    --utility-bar-height: 36px;
+
+    /* ── Radii. Deliberately NOT uniform: flat edges are part of the art
+       direction, and device-context surfaces use an asymmetric notch. ──── */
+    --radius-control: 10px;
+    --radius-card: 12px;
+    --radius-editorial: 18px;
+    --radius-chip: 999px;
+    --radius-device-notch: 2px;
+
+    /* ── Elevation. Borders carry cards; shadows are reserved for things
+       that genuinely float above the page. ───────────────────────────── */
+    --shadow-drawer: 0 16px 48px -12px rgb(11 18 32 / 0.28);
+    --shadow-menu: 0 12px 32px -8px rgb(11 18 32 / 0.18);
+    --shadow-dialog: 0 24px 64px -16px rgb(11 18 32 / 0.32);
+
+    /* ── Motion ─────────────────────────────────────────────────────────── */
+    --ease: cubic-bezier(0.2, 0, 0.13, 1);
+    --duration-fast: 140ms;
+    --duration-base: 180ms;
+    --duration-slow: 220ms;
+
+    /* ── Controls ───────────────────────────────────────────────────────── */
+    --control-height: 48px;
+    --target-min: 44px;
+    --border-width: 1px;
+    --focus-ring-width: 2px;
+    --focus-ring-offset: 2px;
+
+    --z-header: 100;
+    --z-mobile-nav: 110;
+    --z-drawer: 200;
+    --z-dialog: 300;
+    --z-consent: 400;
+  }
+
+  @media (min-width: 750px) {
+    :root {
+      --gutter: var(--space-5); /* 24 tablet */
+      --header-height: 72px;
+    }
+  }
+
+  @media (min-width: 1200px) {
+    :root {
+      --gutter: var(--space-6); /* 32 desktop */
+      --header-height: 80px;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    :root {
+      --duration-fast: 0ms;
+      --duration-base: 0ms;
+      --duration-slow: 0ms;
+    }
+  }
+</style>

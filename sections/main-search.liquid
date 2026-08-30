@@ -1,0 +1,238 @@
+{% comment %}
+  Search results page.
+
+  Search results are filterable and sortable exactly like a collection, because a customer who
+  searched "cover" is browsing a category by another route and needs the same tools.
+
+  The no-results state is the important part of this template. A search that finds nothing is a
+  customer about to leave, so it offers four concrete routes onward: check the spelling, browse
+  suggested categories, use the device finder, or talk to a person.
+{% endcomment %}
+
+{%- liquid
+  assign per_page = section.settings.products_per_page | default: 24
+-%}
+
+<div class="collection page">
+  {% render 'breadcrumbs' %}
+
+  <header class="collection__header">
+    <h1 class="collection__title text-h1">
+      {%- if search.performed -%}
+        {{ 'search.results_title' | t: terms: search.terms }}
+      {%- else -%}
+        {{ 'search.title' | t }}
+      {%- endif -%}
+    </h1>
+
+    {%- comment -%} A second search field on the results page: refining is the common next move. {%- endcomment -%}
+    <div class="search-page__form">
+      {% render 'predictive-search', id: 'search-page' %}
+    </div>
+  </header>
+
+  {%- if search.performed -%}
+    {%- if search.results.size > 0 -%}
+      {%- paginate search.results by per_page -%}
+        <div class="collection__layout">
+          <aside class="collection__sidebar" id="collection-filters">
+            <h2 class="visually-hidden">{{ 'facets.title' | t }}</h2>
+            {% render 'facets', results: search, context: 'sidebar' %}
+          </aside>
+
+          <div class="collection__main">
+            <div class="collection__toolbar">
+              <p class="collection__count text-ui" role="status">
+                {{- 'search.results_count' | t: count: search.results_count -}}
+              </p>
+
+              <div class="collection__toolbar-actions">
+                <button
+                  class="button button--secondary button--small collection__filter-toggle"
+                  type="button"
+                  aria-expanded="false"
+                  aria-controls="collection-filters"
+                  data-facets-open
+                >
+                  {% render 'icon', name: 'filter', class: 'icon--sm' %}
+                  {{ 'facets.open' | t }}
+                </button>
+
+                {% render 'sort-select', results: search %}
+              </div>
+            </div>
+
+            <div class="collection__results" data-collection-results>
+              <ul class="grid grid--products" role="list" data-product-grid>
+                {%- for item in search.results -%}
+                  <li>
+                    {%- case item.object_type -%}
+                      {%- when 'product' -%}
+                        {%- liquid
+                          assign is_lcp = false
+                          if forloop.first and paginate.current_page == 1
+                            assign is_lcp = true
+                          endif
+                        -%}
+                        {% render 'product-card', product: item, lcp: is_lcp, sizes: '(min-width: 1200px) 260px, (min-width: 990px) calc((100vw - 388px) / 3), (min-width: 750px) 30vw, 45vw' %}
+
+                      {%- when 'article' -%}
+                        <a class="search-result surface" href="{{ item.url }}">
+                          <span class="eyebrow">{{ 'blog.title' | t }}</span>
+                          <span class="text-ui">{{ item.title }}</span>
+                        </a>
+
+                      {%- when 'page' -%}
+                        <a class="search-result surface" href="{{ item.url }}">
+                          <span class="eyebrow">{{ 'search.pages' | t }}</span>
+                          <span class="text-ui">{{ item.title }}</span>
+                        </a>
+                    {%- endcase -%}
+                  </li>
+                {%- endfor -%}
+              </ul>
+
+              {%- if paginate.pages > 1 -%}
+                {% render 'pagination', paginate: paginate, show_load_more: section.settings.enable_load_more %}
+              {%- endif -%}
+            </div>
+          </div>
+        </div>
+      {%- endpaginate -%}
+    {%- else -%}
+      {%- comment -%}
+        The recovery state. Never a blank page: this is the highest-intent moment in the store
+        and the customer is one click from leaving.
+      {%- endcomment -%}
+      <div class="noresults surface">
+        {% render 'icon', name: 'search', class: 'icon--xl' %}
+        <h2 class="text-h3">{{ 'search.no_results_title' | t: terms: search.terms }}</h2>
+        <p class="text-body text-secondary text-measure">{{ 'search.no_results_body' | t }}</p>
+
+        <div class="noresults__actions">
+          <a class="button button--primary" href="{{ section.settings.device_finder_url | default: '/pages/trova-dispositivo' }}">
+            {% render 'icon', name: 'device', class: 'icon--sm' %}
+            {{ 'device.open_finder' | t }}
+          </a>
+
+          {%- if settings.business_whatsapp != blank -%}
+            <a class="button button--secondary" href="https://wa.me/{{ settings.business_whatsapp }}" rel="noopener" target="_blank">
+              {% render 'icon', name: 'whatsapp', class: 'icon--sm' %}
+              {{ 'store.contact_whatsapp' | t }}
+            </a>
+          {%- endif -%}
+        </div>
+
+        {%- assign suggestions = section.blocks | where: 'type', 'suggested_collection' -%}
+        {%- if suggestions.size > 0 -%}
+          <div class="noresults__suggestions">
+            <p class="eyebrow">{{ 'collections.related_categories' | t }}</p>
+            <ul class="noresults__chips" role="list">
+              {%- for block in suggestions -%}
+                {%- assign suggested = collections[block.settings.collection] -%}
+                {%- if suggested != blank -%}
+                  <li {{ block.shopify_attributes }}>
+                    <a class="chip" href="{{ suggested.url }}">{{ suggested.title }}</a>
+                  </li>
+                {%- endif -%}
+              {%- endfor -%}
+            </ul>
+          </div>
+        {%- endif -%}
+      </div>
+    {%- endif -%}
+  {%- endif -%}
+</div>
+
+<script type="module" src="{{ 'facets.js' | asset_url }}"></script>
+
+{% stylesheet %}
+  .search-page__form {
+    max-width: 560px;
+  }
+
+  .search-result {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-1);
+    height: 100%;
+    padding: var(--space-4);
+    text-decoration: none;
+    color: var(--color-ink);
+  }
+
+  .search-result:hover {
+    border-color: var(--color-ink);
+  }
+
+  .noresults {
+    display: grid;
+    justify-items: center;
+    text-align: center;
+    gap: var(--space-3);
+    padding: var(--space-8) var(--space-4);
+    color: var(--color-text-secondary);
+  }
+
+  .noresults h2 {
+    margin: 0;
+    color: var(--color-ink);
+  }
+
+  .noresults__actions {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: var(--space-2);
+  }
+
+  .noresults__suggestions {
+    margin-block-start: var(--space-4);
+    padding-block-start: var(--space-4);
+    border-block-start: var(--border-width) solid var(--color-border);
+    width: 100%;
+    max-width: 640px;
+  }
+
+  .noresults__chips {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: var(--space-2);
+    margin-block-start: var(--space-2);
+    list-style: none;
+  }
+{% endstylesheet %}
+
+{% schema %}
+{
+  "name": "t:names.main_search",
+  "settings": [
+    {
+      "type": "range",
+      "id": "products_per_page",
+      "min": 12,
+      "max": 48,
+      "step": 4,
+      "label": "t:labels.products_to_show",
+      "default": 24
+    },
+    {
+      "type": "checkbox",
+      "id": "enable_load_more",
+      "label": "t:labels.enable_load_more",
+      "default": true,
+      "info": "t:info.load_more"
+    },
+    { "type": "url", "id": "device_finder_url", "label": "Pagina «Trova il tuo dispositivo»" }
+  ],
+  "blocks": [
+    {
+      "type": "suggested_collection",
+      "name": "Categoria suggerita",
+      "limit": 6,
+      "settings": [{ "type": "collection", "id": "collection", "label": "t:labels.collection" }]
+    }
+  ]
+}
+{% endschema %}

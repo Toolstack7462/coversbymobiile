@@ -1,0 +1,300 @@
+{% comment %}
+  Predictive search results, rendered server-side and fetched by <predictive-search> through the
+  Section Rendering API (`/search/suggest?q=...&section_id=predictive-search`).
+
+  Rendering on the server rather than returning JSON means money formatting, translations and
+  the compatibility badge behave exactly as they do everywhere else, and the client never has to
+  build markup with innerHTML.
+
+  The empty state is a real feature, not a fallback: a customer who has typed nothing yet is
+  offered popular searches and the device finder, and a customer whose search found nothing is
+  offered recovery routes rather than a blank panel.
+{% endcomment %}
+
+{%- liquid
+  assign products = predictive_search.resources.products
+  assign collections = predictive_search.resources.collections
+  assign pages = predictive_search.resources.pages
+  assign articles = predictive_search.resources.articles
+
+  assign total = products.size | plus: collections.size | plus: pages.size | plus: articles.size
+-%}
+
+<div class="ps">
+  {%- if predictive_search.performed -%}
+    {%- if total > 0 -%}
+      {%- if products.size > 0 -%}
+        <div class="ps__group">
+          <p class="ps__heading eyebrow" id="ps-products">{{ 'search.products' | t }}</p>
+          <ul class="ps__list" role="list" aria-labelledby="ps-products">
+            {%- for product in products -%}
+              <li>
+                <a class="ps__item" href="{{ product.url }}" role="option" tabindex="-1">
+                  <div class="ps__media">
+                    {%- if product.featured_media -%}
+                      <img
+                        src="{{ product.featured_media | image_url: width: 120 }}"
+                        alt="{{ product.featured_media.alt | default: product.title | escape }}"
+                        width="60"
+                        height="60"
+                        loading="lazy"
+                      >
+                    {%- else -%}
+                      <span class="ps__media-empty">
+                        {% render 'icon', name: 'package', class: 'icon--sm' %}
+                      </span>
+                    {%- endif -%}
+                  </div>
+
+                  <div class="ps__body">
+                    {%- if product.vendor != blank -%}
+                      <span class="ps__vendor text-caption text-secondary">{{ product.vendor }}</span>
+                    {%- endif -%}
+                    <span class="ps__title text-ui">{{ product.title }}</span>
+                    {% render 'compat-badge', product: product %}
+                  </div>
+
+                  <div class="ps__price">
+                    {% render 'price', product: product, show_prior: false %}
+                  </div>
+                </a>
+              </li>
+            {%- endfor -%}
+          </ul>
+        </div>
+      {%- endif -%}
+
+      {%- if collections.size > 0 -%}
+        <div class="ps__group">
+          <p class="ps__heading eyebrow" id="ps-collections">{{ 'search.collections' | t }}</p>
+          <ul class="ps__list ps__list--compact" role="list" aria-labelledby="ps-collections">
+            {%- for collection in collections -%}
+              <li>
+                <a class="ps__link text-ui" href="{{ collection.url }}" role="option" tabindex="-1">
+                  {% render 'icon', name: 'grid', class: 'icon--sm' %}
+                  {{ collection.title }}
+                </a>
+              </li>
+            {%- endfor -%}
+          </ul>
+        </div>
+      {%- endif -%}
+
+      {%- if articles.size > 0 -%}
+        <div class="ps__group">
+          <p class="ps__heading eyebrow" id="ps-articles">{{ 'search.articles' | t }}</p>
+          <ul class="ps__list ps__list--compact" role="list" aria-labelledby="ps-articles">
+            {%- for article in articles -%}
+              <li>
+                <a class="ps__link text-ui" href="{{ article.url }}" role="option" tabindex="-1">
+                  {{ article.title }}
+                </a>
+              </li>
+            {%- endfor -%}
+          </ul>
+        </div>
+      {%- endif -%}
+
+      {%- if pages.size > 0 -%}
+        <div class="ps__group">
+          <p class="ps__heading eyebrow" id="ps-pages">{{ 'search.pages' | t }}</p>
+          <ul class="ps__list ps__list--compact" role="list" aria-labelledby="ps-pages">
+            {%- for page in pages -%}
+              <li>
+                <a class="ps__link text-ui" href="{{ page.url }}" role="option" tabindex="-1">
+                  {{ page.title }}
+                </a>
+              </li>
+            {%- endfor -%}
+          </ul>
+        </div>
+      {%- endif -%}
+
+      <a class="ps__all button button--secondary button--full" href="{{ routes.search_url }}?q={{ predictive_search.terms | url_encode }}">
+        {{ 'search.view_all_results' | t: terms: predictive_search.terms }}
+      </a>
+    {%- else -%}
+      {%- comment -%}
+        No results. Never a blank panel — offer spelling advice, the device finder and a human.
+      {%- endcomment -%}
+      <div class="ps__empty">
+        <p class="ps__empty-title text-ui">
+          {{ 'search.no_results_title' | t: terms: predictive_search.terms }}
+        </p>
+        <p class="text-ui text-secondary">{{ 'search.no_results_body' | t }}</p>
+
+        <ul class="ps__recovery" role="list">
+          <li>
+            <a class="ps__link text-ui" href="{{ settings.device_finder_help_page.url | default: '/pages/trova-dispositivo' }}">
+              {% render 'icon', name: 'device', class: 'icon--sm' %}
+              {{ 'search.try_device_finder' | t }}
+            </a>
+          </li>
+          {%- if settings.business_whatsapp != blank -%}
+            <li>
+              <a class="ps__link text-ui" href="https://wa.me/{{ settings.business_whatsapp }}" rel="noopener" target="_blank">
+                {% render 'icon', name: 'whatsapp', class: 'icon--sm' %}
+                {{ 'search.need_help' | t }}
+              </a>
+            </li>
+          {%- endif -%}
+        </ul>
+      </div>
+    {%- endif -%}
+  {%- endif -%}
+
+  <span class="visually-hidden" data-search-status>
+    {%- if predictive_search.performed -%}
+      {{ 'search.predictive_status' | t: count: total }}
+    {%- endif -%}
+  </span>
+</div>
+
+{% stylesheet %}
+  .ps {
+    padding: var(--space-2);
+  }
+
+  .ps__group + .ps__group {
+    border-block-start: var(--border-width) solid var(--color-border);
+    margin-block-start: var(--space-2);
+    padding-block-start: var(--space-2);
+  }
+
+  .ps__heading {
+    margin: 0;
+    padding: var(--space-2) var(--space-3);
+  }
+
+  .ps__list {
+    list-style: none;
+  }
+
+  .ps__item {
+    display: grid;
+    grid-template-columns: 60px minmax(0, 1fr) auto;
+    align-items: center;
+    gap: var(--space-3);
+    padding: var(--space-2) var(--space-3);
+    border-radius: var(--radius-control);
+    text-decoration: none;
+    color: var(--color-ink);
+  }
+
+  .ps__item:hover,
+  .ps__item[aria-selected='true'] {
+    background-color: var(--color-surface-sunken);
+  }
+
+  .ps__media {
+    width: 60px;
+    height: 60px;
+    border: var(--border-width) solid var(--color-border);
+    border-radius: var(--radius-control);
+    overflow: hidden;
+    background-color: var(--color-surface);
+  }
+
+  .ps__media img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    padding: 6%;
+  }
+
+  .ps__media-empty {
+    display: grid;
+    place-items: center;
+    width: 100%;
+    height: 100%;
+    color: var(--color-text-secondary);
+    background-color: var(--color-surface-sunken);
+  }
+
+  .ps__body {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+  }
+
+  .ps__vendor {
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+  }
+
+  .ps__title {
+    font-weight: var(--weight-medium);
+  }
+
+  .ps__price .price__current {
+    font-size: var(--text-ui);
+  }
+
+  .ps__list--compact .ps__link {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    min-height: var(--target-min);
+    padding: var(--space-2) var(--space-3);
+    border-radius: var(--radius-control);
+    text-decoration: none;
+    color: var(--color-ink);
+  }
+
+  .ps__list--compact .ps__link:hover {
+    background-color: var(--color-surface-sunken);
+  }
+
+  .ps__all {
+    margin-block-start: var(--space-2);
+  }
+
+  .ps__empty {
+    padding: var(--space-4);
+  }
+
+  .ps__empty-title {
+    margin: 0 0 var(--space-1);
+    font-weight: var(--weight-semibold);
+  }
+
+  .ps__recovery {
+    margin-block-start: var(--space-3);
+    list-style: none;
+    display: grid;
+    gap: var(--space-1);
+  }
+
+  .ps__recovery .ps__link {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    min-height: var(--target-min);
+    color: var(--color-primary);
+    font-weight: var(--weight-medium);
+    text-decoration: none;
+  }
+
+  @media (max-width: 749px) {
+    .ps__item {
+      grid-template-columns: 48px minmax(0, 1fr);
+    }
+
+    .ps__media {
+      width: 48px;
+      height: 48px;
+    }
+
+    .ps__price {
+      grid-column: 2;
+    }
+  }
+{% endstylesheet %}
+
+{% schema %}
+{
+  "name": "t:names.main_search",
+  "settings": []
+}
+{% endschema %}
