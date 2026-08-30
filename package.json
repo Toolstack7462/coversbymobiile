@@ -17,7 +17,9 @@
     "test": "playwright test",
     "test:ui": "playwright test --ui",
     "budgets": "node tests/budgets.mjs",
-    "verify": "npm run check && npm run format:check && npm run budgets && npm run test"
+    "verify": "npm run check && npm run format:check && npm run budgets && npm run test",
+    "preview": "node tests/build-preview.mjs && serve tests/preview -l 4321 --no-clipboard",
+    "preview:build": "node tests/build-preview.mjs"
   },
   "devDependencies": {
     "@axe-core/playwright": "^4.11.2",
@@ -26,6 +28,7 @@
     "@playwright/test": "^1.62.1",
     "@shopify/cli": "^3.87.2",
     "@shopify/prettier-plugin-liquid": "^1.9.5",
-    "prettier": "^3.7.0"
+    "prettier": "^3.7.0",
+    "serve": "^14.2.6"
   }
 }

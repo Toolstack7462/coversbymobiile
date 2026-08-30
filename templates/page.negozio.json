@@ -2,7 +2,58 @@
   "sections": {
     "main": {
       "type": "store-page",
-      "settings": {}
+      "blocks": {
+        "service-1": {
+          "type": "service",
+          "settings": {
+            "heading": "Riparazioni cellulari, tablet e PC",
+            "body": "Diagnosi e riparazione in negozio. Portaci il dispositivo e ti diciamo subito cosa si puo fare.",
+            "icon": "settings"
+          }
+        },
+        "service-2": {
+          "type": "service",
+          "settings": {
+            "heading": "Sostituzione display e batteria",
+            "body": "Schermi rotti e batterie che non tengono piu la carica.",
+            "icon": "device"
+          }
+        },
+        "service-3": {
+          "type": "service",
+          "settings": {
+            "heading": "Protezione tagliata su misura",
+            "body": "Pellicole tagliate al momento sul modello esatto del tuo dispositivo.",
+            "icon": "shield-check"
+          }
+        },
+        "service-4": {
+          "type": "service",
+          "settings": {
+            "heading": "Accessori per smartphone",
+            "body": "Cover, vetri, caricatori, cavi, auricolari, smartwatch e speaker.",
+            "icon": "store"
+          }
+        },
+        "service-5": {
+          "type": "service",
+          "settings": {
+            "heading": "Ritiro ordini online",
+            "body": "Ordina online e ritira in negozio al Centro Il Nuovo Borgo.",
+            "icon": "package"
+          }
+        }
+      },
+      "block_order": [
+        "service-1",
+        "service-2",
+        "service-3",
+        "service-4",
+        "service-5"
+      ],
+      "settings": {
+        "intro": "<p>Covers by Mobile e il nostro negozio all'interno del Centro Commerciale Il Nuovo Borgo a Sulmona. Accessori per smartphone, riparazioni e protezione tagliata su misura.</p>"
+      }
     }
   },
   "order": [

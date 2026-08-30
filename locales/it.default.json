@@ -514,5 +514,11 @@
     "certifications": "Certificazioni dichiarate",
     "battery": "Batterie e spedizione",
     "disposal": "Smaltimento e riciclo"
+  },
+  "localization": {
+    "language_label": "Lingua",
+    "country_label": "Paese e valuta",
+    "change_language": "Cambia lingua",
+    "change_country": "Cambia paese"
   }
 }

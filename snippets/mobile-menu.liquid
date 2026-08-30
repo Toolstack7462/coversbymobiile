@@ -106,6 +106,11 @@
           </a>
         {%- endif -%}
       </div>
+
+      {%- comment -%} Same native selector, so the drawer never drifts from the footer. {%- endcomment -%}
+      <div class="mmenu__localization">
+        {% render 'localization-form', context: 'drawer' %}
+      </div>
     </div>
   </div>
 </mobile-menu>
@@ -210,6 +215,12 @@
     justify-content: flex-start;
     border-block-end: 0;
     min-height: var(--target-min);
+  }
+
+  .mmenu__localization {
+    margin-block-start: var(--space-4);
+    padding-block-start: var(--space-4);
+    border-block-start: var(--border-width) solid var(--color-border);
   }
 
   @media (min-width: 990px) {

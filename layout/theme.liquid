@@ -1,5 +1,15 @@
 <!doctype html>
-<html lang="{{ request.locale.iso_code }}">
+{%- liquid
+  # Shopify exposes no direction property, so RTL locales are listed explicitly. The theme's CSS
+  # uses logical properties throughout (inset-inline, margin-inline, border-inline), so setting
+  # `dir` is genuinely all that is needed for the layout to mirror correctly.
+  assign rtl_locales = 'ar,he,fa,ur,ps,sd,yi,dv,ckb'  | split: ','
+  assign text_direction = 'ltr'
+  if rtl_locales contains request.locale.iso_code
+    assign text_direction = 'rtl'
+  endif
+-%}
+<html lang="{{ request.locale.iso_code }}" dir="{{ text_direction }}">
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">

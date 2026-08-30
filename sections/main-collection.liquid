@@ -33,18 +33,14 @@
     {%- endif -%}
 
     {%- comment -%}
-      Device context. Rendered empty and filled in client-side, because a cached page must not
-      carry one visitor's device to the next.
+      No device block here on purpose. The header carries a global, always-visible device strip
+      directly above this heading, so repeating it would say the same thing twice and double the
+      theme's lime usage against its own 2% budget. The per-card compatibility lines below carry
+      the contextual meaning instead.
+
+      (This block previously shipped with a `hidden` attribute that nothing removed, so it never
+      rendered at all — dead markup as well as redundant.)
     {%- endcomment -%}
-    <device-chip class="collection__device">
-      <p class="collection__device-note surface--device text-ui" data-device-active hidden>
-        {% render 'icon', name: 'device', class: 'icon--sm' %}
-        <span>{{ 'device.my_device' | t }}: <strong data-device-name></strong></span>
-        <button class="collection__device-remove" type="button" data-device-remove>
-          {{ 'device.remove_device' | t }}
-        </button>
-      </p>
-    </device-chip>
   </header>
 
   {%- paginate collection.products by per_page -%}

@@ -1,0 +1,231 @@
+{% doc %}
+  Language and country selector, built on Shopify's native `{% form 'localization' %}`.
+
+  WHY NATIVE. The list is whatever the merchant has enabled in **Settings > Markets** — the
+  theme never hardcodes a language list. Add Romanian in Markets and it appears here with no
+  theme change; remove it and it disappears. That is the whole point: a hardcoded list drifts
+  away from what the store can actually serve.
+
+  PROGRESSIVE ENHANCEMENT. This is a real `<form method="post">` wrapping real
+  `<button type="submit">` options inside a native `<details>`. It works with JavaScript
+  disabled, is keyboard operable, and announces its expanded state — no ARIA needed.
+
+  RTL. Right-to-left languages (Arabic, Hebrew, Persian, Urdu) are supported: the theme's CSS
+  uses logical properties throughout (`inset-inline`, `margin-inline`, `border-inline`), and
+  `layout/theme.liquid` sets `dir` from the active locale. Enable one in Markets and the layout
+  mirrors correctly.
+
+  @param {string} [context] - 'footer' or 'drawer'. Changes only the visual treatment.
+
+  @example
+  {% render 'localization-form', context: 'footer' %}
+{% enddoc %}
+
+{%- liquid
+  assign show_languages = false
+  if localization.available_languages.size > 1
+    assign show_languages = true
+  endif
+
+  assign show_countries = false
+  if localization.available_countries.size > 1
+    assign show_countries = true
+  endif
+
+  assign style = context | default: 'footer'
+-%}
+
+{%- if show_languages or show_countries -%}
+  <div class="localization localization--{{ style }}">
+    {%- form 'localization', class: 'localization__form' -%}
+      {%- if show_languages -%}
+        <details class="localization__group" data-localization>
+          <summary class="localization__toggle" aria-label="{{ 'localization.language_label' | t }}">
+            {% render 'icon', name: 'globe', class: 'icon--sm' %}
+            <span class="localization__current text-ui">
+              {{- localization.language.endonym_name | capitalize -}}
+            </span>
+            {% render 'icon', name: 'chevron-down', class: 'icon--sm localization__chevron' %}
+          </summary>
+
+          <div class="localization__panel">
+            <p class="localization__heading eyebrow" id="lang-heading">
+              {{- 'localization.language_label' | t -}}
+            </p>
+            <ul class="localization__list" role="list" aria-labelledby="lang-heading">
+              {%- for language in localization.available_languages -%}
+                <li>
+                  <button
+                    class="localization__option text-ui{% if language.iso_code == localization.language.iso_code %} is-current{% endif %}"
+                    type="submit"
+                    name="locale_code"
+                    value="{{ language.iso_code }}"
+                    lang="{{ language.iso_code }}"
+                    {% if language.iso_code == localization.language.iso_code %}
+                      aria-current="true"
+                    {% endif %}
+                  >
+                    {%- comment -%}
+                      The endonym: each language written in its own script and spelling
+                      ("Deutsch", not "German"). A customer looking for their language scans for
+                      the word they recognise, which is never the English exonym.
+                    {%- endcomment -%}
+                    <span>{{ language.endonym_name | capitalize }}</span>
+                    {%- if language.iso_code == localization.language.iso_code -%}
+                      {% render 'icon', name: 'check', class: 'icon--sm' %}
+                    {%- endif -%}
+                  </button>
+                </li>
+              {%- endfor -%}
+            </ul>
+          </div>
+        </details>
+      {%- endif -%}
+
+      {%- if show_countries -%}
+        <details class="localization__group" data-localization>
+          <summary class="localization__toggle" aria-label="{{ 'localization.country_label' | t }}">
+            {% render 'icon', name: 'map-pin', class: 'icon--sm' %}
+            <span class="localization__current text-ui">
+              {{- localization.country.name }} ({{ localization.country.currency.iso_code }})
+            </span>
+            {% render 'icon', name: 'chevron-down', class: 'icon--sm localization__chevron' %}
+          </summary>
+
+          <div class="localization__panel">
+            <p class="localization__heading eyebrow" id="country-heading">
+              {{- 'localization.country_label' | t -}}
+            </p>
+            <ul class="localization__list" role="list" aria-labelledby="country-heading">
+              {%- for country in localization.available_countries -%}
+                <li>
+                  <button
+                    class="localization__option text-ui{% if country.iso_code == localization.country.iso_code %} is-current{% endif %}"
+                    type="submit"
+                    name="country_code"
+                    value="{{ country.iso_code }}"
+                    {% if country.iso_code == localization.country.iso_code %}
+                      aria-current="true"
+                    {% endif %}
+                  >
+                    <span>{{ country.name }}</span>
+                    <span class="localization__currency text-caption tabular">
+                      {{- country.currency.iso_code }} {{ country.currency.symbol -}}
+                    </span>
+                  </button>
+                </li>
+              {%- endfor -%}
+            </ul>
+          </div>
+        </details>
+      {%- endif -%}
+    {%- endform -%}
+  </div>
+{%- endif -%}
+
+{% stylesheet %}
+  .localization {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-2);
+  }
+
+  .localization__form {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-2);
+  }
+
+  .localization__group {
+    position: relative;
+  }
+
+  .localization__toggle {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-2);
+    min-height: var(--target-min);
+    padding-inline: var(--space-3);
+    border: var(--border-width) solid var(--color-border-strong);
+    border-radius: var(--radius-control);
+    background-color: var(--color-surface);
+    color: var(--color-ink);
+    font-weight: var(--weight-medium);
+  }
+
+  .localization__toggle:hover {
+    border-color: var(--color-ink);
+  }
+
+  .localization__group[open] .localization__chevron {
+    transform: rotate(180deg);
+  }
+
+  .localization__panel {
+    position: absolute;
+    inset-block-end: calc(100% + var(--space-1));
+    inset-inline-start: 0;
+    z-index: var(--z-drawer);
+    min-width: 220px;
+    max-height: 320px;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    padding: var(--space-2);
+    background-color: var(--color-surface);
+    border: var(--border-width) solid var(--color-border);
+    border-radius: var(--radius-card);
+    box-shadow: var(--shadow-menu);
+  }
+
+  .localization__heading {
+    margin: 0 0 var(--space-1);
+    padding-inline: var(--space-2);
+  }
+
+  .localization__list {
+    list-style: none;
+    display: grid;
+    gap: 1px;
+  }
+
+  .localization__option {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-3);
+    width: 100%;
+    min-height: var(--target-min);
+    padding-inline: var(--space-2);
+    border-radius: var(--radius-control);
+    color: var(--color-ink);
+    text-align: start;
+  }
+
+  .localization__option:hover {
+    background-color: var(--color-surface-sunken);
+  }
+
+  .localization__option.is-current {
+    font-weight: var(--weight-semibold);
+    background-color: var(--color-primary-surface);
+  }
+
+  .localization__currency {
+    color: var(--color-text-secondary);
+  }
+
+  /* On the navy footer the control has to invert. */
+  .localization--footer .localization__toggle {
+    background-color: transparent;
+    border-color: rgb(255 255 255 / 0.24);
+    color: var(--color-surface);
+  }
+
+  .localization--footer .localization__toggle:hover {
+    background-color: rgb(255 255 255 / 0.08);
+    border-color: rgb(255 255 255 / 0.4);
+  }
+
+  /* The panel itself stays on a light surface: a dropdown of language names needs maximum
+     legibility, and inverting it would put small text on a dark ground for no benefit. */
+{% endstylesheet %}

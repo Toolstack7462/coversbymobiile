@@ -181,6 +181,12 @@
         {%- endif -%}
       </p>
 
+      {%- comment -%}
+        Language and country selector. Renders only when the merchant has enabled more than one
+        in Shopify Markets, so a single-market store shows nothing rather than a dead control.
+      {%- endcomment -%}
+      {% render 'localization-form', context: 'footer' %}
+
       {%- if settings.enable_consent_banner -%}
         <button class="footer__consent text-caption" type="button" data-consent-reopen>
           {% render 'icon', name: 'settings', class: 'icon--sm' %}
